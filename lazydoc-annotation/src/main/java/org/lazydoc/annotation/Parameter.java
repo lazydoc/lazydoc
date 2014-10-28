@@ -11,5 +11,5 @@ public @interface Parameter {
 
 	String description() default "";
 
-	boolean ignoreForDocumentation() default false;
+	boolean ignore() default false;
 }
