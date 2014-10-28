@@ -109,9 +109,9 @@ public class DocumentationReporter {
             ignoredFields += model.getIgnoredFields().size();
         }
 
-        Double documented = new Double(documentedMethods + documentedErrorHandlers + documentedFields);
-        Double undocumented = new Double(undocumentedMethods + undocumentedErrorHandlers + undocumentedFields);
-        Double ignored = new Double(ignoredMethods + ignoredErrorHandlers + ignoredFields);
+        Double documented = (double) (documentedMethods + documentedErrorHandlers + documentedFields);
+        Double undocumented = (double) (undocumentedMethods + undocumentedErrorHandlers + undocumentedFields);
+        Double ignored = (double) (ignoredMethods + ignoredErrorHandlers + ignoredFields);
         double documentationCoverage = documented * 100.0 / (documented + undocumented + ignored);
         double documentationCoverageWithoutIgnored = documented * 100.0 / (documented + undocumented);
         System.out.println("-----------------------------------------------------------------------------------------------------------");
@@ -145,63 +145,79 @@ public class DocumentationReporter {
         System.out.println(" DOCUMENTATION PROGRESS REPORT");
         System.out.println("");
         System.out.println("-----------------------------------------------------------------------------------------------------------");
+        System.out.println("#############################");
+        System.out.println(" Undocumented Controllers:");
+        System.out.println("#############################");
+        for (ControllerDocumentationProgress controllerDocumentationProgress : controllersProgress.values()) {
+            if (controllerDocumentationProgress.isUndocumented()) {
+                printMethodsOfController(controllerDocumentationProgress);
+            }
+        }
+        System.out.println("#############################");
+        System.out.println(" Ignored Controllers:");
+        System.out.println("#############################");
+        for (ControllerDocumentationProgress controllerDocumentationProgress : controllersProgress.values()) {
+            if (controllerDocumentationProgress.isIgnored()) {
+                System.out.println("Reason to ignore controller: " + controllerDocumentationProgress.getIgnoreReason());
+                printMethodsOfController(controllerDocumentationProgress);
+            }
+        }
+        System.out.println("#############################");
+        System.out.println(" Documented Controllers:");
+        System.out.println("#############################");
         for (ControllerDocumentationProgress controllerDocumentationProgress : controllersProgress.values()) {
             System.out.println("Controller " + controllerDocumentationProgress.getController().getSimpleName());
-            if (controllerDocumentationProgress.isIgnored()) {
-                System.out.println("");
-                System.out.println("Is ignored for documentation | Reason: " + controllerDocumentationProgress.getIgnoreReason());
-            } else {
-            	if(controllerDocumentationProgress.getUndocumentedMethods().size() > 0) {
-                    System.out.println("");
-                    System.out.println("Undocumented methods:");
-                    System.out.println("_____________________");
-                    for (String method : controllerDocumentationProgress.getUndocumentedMethods()) {
-                        System.out.println(method);
-                    }
-            	}
-            	if(controllerDocumentationProgress.getIgnoredMethods().size() > 0) {
-	                System.out.println("");
-	                System.out.println("Ignored methods:");
-	                System.out.println("________________");
-	                for (String method : controllerDocumentationProgress.getIgnoredMethods()) {
-	                    System.out.println(method);
-	                }
-            	}
-            	if(controllerDocumentationProgress.getIgnoredMethods().size() > 0) {
-                    System.out.println("");
-                    System.out.println("Undocumented Errorhandlers:");
-                    System.out.println("___________________________");
-                    for (String errorHandler : controllerDocumentationProgress.getUndocumentedErrorHandlers()) {
-                        System.out.println(errorHandler);
-                    }
-            	}
+            if (!controllerDocumentationProgress.isIgnored() && !controllerDocumentationProgress.isUndocumented()) {
+                printMethodsOfController(controllerDocumentationProgress);
 
             }
-            System.out.println("- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -");
         }
         System.out.println("-----------------------------------------------------------------------------------------------------------");
         for (ModelDocumentationProgress modelDocumentationProgress : modelsProgress.values()) {
-            System.out.println("Model " + modelDocumentationProgress.getModelClass().getSimpleName());
-            System.out.println("");
-            System.out.println("Documented fields:");
-            System.out.println("___________________________");
-            for (String field : modelDocumentationProgress.getDocumentedFields()) {
-                System.out.println(field);
+            System.out.println("Model " + modelDocumentationProgress.getModelClass().getSimpleName()+"\n");
+            if (modelDocumentationProgress.getDocumentedFields().size() > 0) {
+                System.out.println("**** Documented fields ****");
+                for (String field : modelDocumentationProgress.getDocumentedFields()) {
+                    System.out.println(field);
+                }
             }
-            System.out.println("");
-            System.out.println("Ignored fields:");
-            System.out.println("___________________________");
-            for (String field : modelDocumentationProgress.getIgnoredFields()) {
-                System.out.println(field);
+            if (modelDocumentationProgress.getIgnoredFields().size() > 0) {
+                System.out.println("**** Ignored fields ****");
+                for (String field : modelDocumentationProgress.getIgnoredFields()) {
+                    System.out.println(field);
+                }
             }
-            System.out.println("");
-            System.out.println("Undocumented fields:");
-            System.out.println("___________________________");
-            for (String field : modelDocumentationProgress.getUndocumentedFields()) {
-                System.out.println(field);
+            if (modelDocumentationProgress.getUndocumentedFields().size() > 0) {
+                System.out.println("**** Undocumented fields ****");
+                for (String field : modelDocumentationProgress.getUndocumentedFields()) {
+                    System.out.println(field);
+                }
             }
             System.out.println("- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -");
         }
+    }
+
+    private void printMethodsOfController(ControllerDocumentationProgress controllerDocumentationProgress) {
+        System.out.println("Controller " + controllerDocumentationProgress.getController().getSimpleName()+"\n");
+        if (controllerDocumentationProgress.getUndocumentedMethods().size() > 0) {
+            System.out.println("**** Undocumented methods ****");
+            for (String method : controllerDocumentationProgress.getUndocumentedMethods()) {
+                System.out.println(method);
+            }
+        }
+        if (controllerDocumentationProgress.getIgnoredMethods().size() > 0) {
+            System.out.println("**** Ignored methods ****");
+            for (String method : controllerDocumentationProgress.getIgnoredMethods()) {
+                System.out.println(method);
+            }
+        }
+        if (controllerDocumentationProgress.getIgnoredMethods().size() > 0) {
+            System.out.println("**** Undocumented Errorhandlers ****");
+            for (String errorHandler : controllerDocumentationProgress.getUndocumentedErrorHandlers()) {
+                System.out.println(errorHandler);
+            }
+        }
+        System.out.println("");
     }
  
     public void printProgressTable() {

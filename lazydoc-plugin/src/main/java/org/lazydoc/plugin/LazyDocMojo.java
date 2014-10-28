@@ -32,9 +32,6 @@ public class LazyDocMojo extends AbstractMojo {
     @Parameter
     private Config config;
 
-    @Component
-    private PlexusConfig
-
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
         Log log = getLog();

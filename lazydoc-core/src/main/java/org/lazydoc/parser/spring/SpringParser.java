@@ -1,6 +1,7 @@
 package org.lazydoc.parser.spring;
 
 import org.apache.commons.lang3.StringUtils;
+import org.jboss.errai.reflections.Reflections;
 import org.lazydoc.annotation.*;
 import org.lazydoc.config.Config;
 import org.lazydoc.model.*;
@@ -8,7 +9,6 @@ import org.lazydoc.parser.DataTypeParser;
 import org.lazydoc.reporter.DocumentationReporter;
 import org.lazydoc.util.Inspector;
 import org.lazydoc.util.InstanceCreator;
-import org.jboss.errai.reflections.Reflections;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
@@ -70,16 +70,16 @@ public class SpringParser {
             String generalRequestMapping = getGeneralRequestMapping(controller);
             for (Method method : controller.getDeclaredMethods()) {
                 if (ignoreMethodForDocumentation(generalRequestMapping, method)) {
-                    reporter.addIgnoredMethod(controller, method.toGenericString());
+                    reporter.addIgnoredMethod(controller, method.toString());
                     continue;
                 }
                 if (methodHasRequestMapping(method)) {
-                    reporter.addDocumentedMethod(controller, method.toGenericString());
                     String path = getRequestMapping(generalRequestMapping, method);
                     requestMappings.add(path);
                     DocDomain domain = getDomain(method);
                     domain.setErrorList(errorList);
                     addOperation(method, path, domain);
+                    reporter.addDocumentedMethod(controller, method.toString());
                 }
 
             }
@@ -119,15 +119,15 @@ public class SpringParser {
                 if (method.isAnnotationPresent(ErrorDescription.class)) {
                     ErrorDescription errorDescription = method.getAnnotation(ErrorDescription.class);
                     if (errorDescription.ignore()) {
-                        reporter.addIgnoredErrorHandler(controller, method.toGenericString());
+                        reporter.addIgnoredErrorHandler(controller, method.toString());
                         continue;
                     }
-                    reporter.addDocumentedErrorHandler(controller, method.toGenericString());
+                    reporter.addDocumentedErrorHandler(controller, method.toString());
                     errorMessage = errorDescription.errorMessage();
                     description = errorDescription.description();
 
                 } else {
-                    reporter.addUndocumentedErrorHandler(controller, method.toGenericString());
+                    reporter.addUndocumentedErrorHandler(controller, method.toString());
                 }
                 if (StringUtils.isEmpty(errorMessage)) {
                     errorMessage = getErrorMessageFromExceptionHandler(method, controllerInstance, exceptionHandler);
@@ -172,12 +172,15 @@ public class SpringParser {
     private Class<?> getDocumentation(Class<?> controller) {
         if (StringUtils.isNotBlank(config.getDocumentationSuffix())) {
             try {
-                return getClassByName(controller.getName() + config.getDocumentationSuffix());
+                String documentationName = controller.getName() + config.getDocumentationSuffix();
+                System.out.println("Documentation name: "+documentationName);
+                return getClassByName(documentationName);
             } catch (RuntimeException ex) {
                 return null;
             }
+        } else {
+            return controller;
         }
-        return controller;
     }
 
     private boolean hasNoDocumentation(Class<?> documentation, Class<?> controller) {
@@ -185,10 +188,10 @@ public class SpringParser {
             reporter.addUndocumentedController(controller);
             for (Method method : controller.getDeclaredMethods()) {
                 if (method.isAnnotationPresent(RequestMapping.class)) {
-                    reporter.addUndocumentedMethod(controller, method.toGenericString());
+                    reporter.addUndocumentedMethod(controller, method.toString());
                 }
                 if (method.isAnnotationPresent(ExceptionHandler.class)) {
-                    reporter.addUndocumentedErrorHandler(controller, method.toGenericString());
+                    reporter.addUndocumentedErrorHandler(controller, method.toString());
                 }
             }
             return true;
@@ -202,10 +205,10 @@ public class SpringParser {
             reporter.addIgnoredController(controller, ignoreForDocumentation.reason());
             for (Method method : controller.getDeclaredMethods()) {
                 if (method.isAnnotationPresent(RequestMapping.class)) {
-                    reporter.addIgnoredMethod(controller, method.toGenericString());
+                    reporter.addIgnoredMethod(controller, method.toString());
                 }
                 if (method.isAnnotationPresent(ExceptionHandler.class)) {
-                    reporter.addIgnoredErrorHandler(controller, method.toGenericString());
+                    reporter.addIgnoredErrorHandler(controller, method.toString());
                 }
             }
             return true;
@@ -274,6 +277,7 @@ public class SpringParser {
     }
 
     private DocDomain getDomain(Method method) {
+
         if (method == null) {
             throw new RuntimeException("No domain description found in controller");
         }
@@ -351,10 +355,10 @@ public class SpringParser {
         return "";
     }
 
-    private String getGeneralRequestMapping(Class<?> subtypeClass) {
+    private String getGeneralRequestMapping(Class<?> controller) {
         String generalRequestMapping = "";
-        if (subtypeClass.isAnnotationPresent(RequestMapping.class)) {
-            generalRequestMapping = ((RequestMapping) subtypeClass.getAnnotation(RequestMapping.class)).value()[0];
+        if (controller.isAnnotationPresent(RequestMapping.class)) {
+            generalRequestMapping = controller.getAnnotation(RequestMapping.class).value()[0];
         }
         return generalRequestMapping;
     }
