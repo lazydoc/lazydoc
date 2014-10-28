@@ -519,7 +519,7 @@ public class SpringParser {
         Parameter parameter = getParameter(parameterDescription, docParameter.getReferenceName());
         docParameter.setDataTypeClass(getDataTypeClass(parameter, parameterType));
         docParameter.setDescription(parameter.description());
-        docParameter.setIgnore(parameter.ignoreForDocumentation());
+        docParameter.setIgnore(parameter.ignore());
     }
 
     private void addRequestBodyParametersToDocParameter(ParameterDescription parameterDescription, DocParameter docParameter,
@@ -532,7 +532,7 @@ public class SpringParser {
         docParameter.setReferenceName(dataTypeName.toLowerCase() + "-data");
         docParameter.setDataTypeClass(dataTypeClass);
         docParameter.setDescription(parameter.description());
-        docParameter.setIgnore(parameter.ignoreForDocumentation());
+        docParameter.setIgnore(parameter.ignore());
         if (parameterType.isArray()) {
             docParameter.setReferenceName(dataTypeName.toLowerCase() + "-list-data");
             dataTypeParser.addListDataTypeStubAndAddRealDataType(docParameter, parameterType, dataTypeName);
@@ -550,7 +550,7 @@ public class SpringParser {
         docParameter.setRequired(requestParam.required());
         Parameter parameter = getParameter(parameterDescription, requestParam.value());
         docParameter.setDataTypeClass(getDataTypeClass(parameter, parameterType));
-        docParameter.setIgnore(parameter.ignoreForDocumentation());
+        docParameter.setIgnore(parameter.ignore());
         docParameter.setDescription(parameter.description());
     }
 
