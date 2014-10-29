@@ -87,6 +87,11 @@ public class Config {
         return printerConfigs;
     }
 
+    public void setPrinterConfigs(List<PrinterConfig> printerConfigs) {
+        this.printerConfigs = printerConfigs;
+    }
+
+
     public String getInstanceControllerClassForCommonExceptionHandlers() {
         return instanceControllerClassForCommonExceptionHandlers;
     }
@@ -102,4 +107,5 @@ public class Config {
     public void setControllerClassToStopErrorInspection(String controllerClassToStopErrorInspection) {
         this.controllerClassToStopErrorInspection = controllerClassToStopErrorInspection;
     }
+
 }

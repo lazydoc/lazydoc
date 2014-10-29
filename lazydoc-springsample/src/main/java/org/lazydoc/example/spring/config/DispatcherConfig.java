@@ -14,7 +14,7 @@ import java.util.List;
 
 @Configuration
 @EnableWebMvc
-@ComponentScan(basePackages = "de.farmers.sw.zas")
+@ComponentScan(basePackages = "org.lazydoc.example.spring")
 public class DispatcherConfig extends WebMvcConfigurerAdapter {
 
 	@Override
@@ -25,4 +25,6 @@ public class DispatcherConfig extends WebMvcConfigurerAdapter {
 		converters.add(converter);
 		super.configureMessageConverters(converters);
 	}
+
+
 }

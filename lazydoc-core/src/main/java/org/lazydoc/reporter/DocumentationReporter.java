@@ -133,8 +133,8 @@ public class DocumentationReporter {
         System.out.println("Undocumented fields: " + undocumentedFields);
         System.out.println("Ignored fields: " + ignoredFields);
         System.out.println("-----------------------------------------------------------------------------------------------------------");
-        System.out.println("Documentation coverage: " + new DecimalFormat("#.00").format(documentationCoverage) + "%");
-        System.out.println("Documentation coverage without ignored: " + new DecimalFormat("#.00").format(documentationCoverageWithoutIgnored) + "%");
+        System.out.println("Documentation coverage: " + new DecimalFormat("0.00").format(documentationCoverage) + "%");
+        System.out.println("Documentation coverage without ignored: " + new DecimalFormat("0.00").format(documentationCoverageWithoutIgnored) + "%");
         System.out.println("-----------------------------------------------------------------------------------------------------------");
 
     }

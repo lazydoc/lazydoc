@@ -24,8 +24,8 @@ import java.util.Properties;
 
 @Configuration
 @EnableTransactionManagement
-@EnableJpaRepositories("de.farmers.sw.zas.core.repositories")
-@ComponentScan({ "de.farmers.sw.zas.core" })
+@EnableJpaRepositories("org.lazydoc.example.spring")
+@ComponentScan({ "org.lazydoc.example.spring" })
 public class PersistenceConfig {
 
 	private static Logger log = LoggerFactory.getLogger(PersistenceConfig.class);

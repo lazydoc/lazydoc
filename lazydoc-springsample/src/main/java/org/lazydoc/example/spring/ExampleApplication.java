@@ -20,9 +20,6 @@ public class ExampleApplication {
 	@Autowired
 	private Environment env;
 
-    public ExampleApplication() {
-    }
-
     @Bean
 	public EmbeddedServletContainerFactory servletContainer() {
 		TomcatEmbeddedServletContainerFactory factory = new TomcatEmbeddedServletContainerFactory();

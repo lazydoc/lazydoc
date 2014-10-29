@@ -56,9 +56,9 @@
         </dependency>
 
         <dependency>
-            <groupId>org.jboss.errai.reflections</groupId>
+            <groupId>org.reflections</groupId>
             <artifactId>reflections</artifactId>
-            <version>2.3.2.Final</version>
+            <version>0.9.9</version>
         </dependency>
 
         <dependency>

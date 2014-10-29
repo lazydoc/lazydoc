@@ -14,11 +14,24 @@
     <build>
         <plugins>
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-deploy-plugin</artifactId>
-                <configuration>
-                    <skip>true</skip>
-                </configuration>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>1.1.1</version>
+                <executions>
+                    <execution>
+                        <phase>compile</phase>
+                        <goals>
+                            <goal>java</goal>
+                        </goals>
+                        <configuration>
+                            <includeProjectDependencies>true</includeProjectDependencies>
+                            <mainClass>org.lazydoc.example.spring.doc.ExampleDocParser</mainClass>
+                            <arguments>
+                                <argument>${project.basedir}/</argument>
+                            </arguments>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>
@@ -54,6 +67,19 @@
             <artifactId>hsqldb</artifactId>
             <version>2.3.2</version>
         </dependency>
+
+        <dependency>
+            <groupId>org.lazydoc</groupId>
+            <artifactId>lazydoc-annotation</artifactId>
+            <version>1.0.0-SNAPSHOT</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.lazydoc</groupId>
+            <artifactId>lazydoc-core</artifactId>
+            <version>1.0.0-SNAPSHOT</version>
+        </dependency>
+
 
     </dependencies>
 

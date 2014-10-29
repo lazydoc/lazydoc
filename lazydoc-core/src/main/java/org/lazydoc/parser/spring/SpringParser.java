@@ -1,14 +1,15 @@
 package org.lazydoc.parser.spring;
 
 import org.apache.commons.lang3.StringUtils;
-import org.jboss.errai.reflections.Reflections;
 import org.lazydoc.annotation.*;
 import org.lazydoc.config.Config;
 import org.lazydoc.model.*;
 import org.lazydoc.parser.DataTypeParser;
+import org.lazydoc.parser.exception.UndocumentedMethodException;
 import org.lazydoc.reporter.DocumentationReporter;
 import org.lazydoc.util.Inspector;
 import org.lazydoc.util.InstanceCreator;
+import org.reflections.Reflections;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
@@ -56,7 +57,14 @@ public class SpringParser {
     }
 
     private Set<Class<?>> getAllRestfulControllerClasses() {
-        return new Reflections(config.getPackageToSearchForControllers()).getTypesAnnotatedWith(Controller.class);
+        String packageToSearchForControllers = config.getPackageToSearchForControllers();
+        if(StringUtils.isBlank(packageToSearchForControllers)) {
+            throw new RuntimeException("Please provide package to search for controllers in configuration");
+        }
+        System.out.println("Looking up on package "+packageToSearchForControllers);
+        Set<Class<?>> controllerSet = new Reflections(packageToSearchForControllers).getTypesAnnotatedWith(Controller.class);
+        System.out.println("Found Controllers: "+StringUtils.join(controllerSet, ", "));
+        return controllerSet;
     }
 
     private void extractControllerDetails(SortedSet<String> requestMappings, Class<?> controller) {
@@ -69,17 +77,22 @@ public class SpringParser {
             Set<DocError> errorList = getListOfPossibleErrors(controller);
             String generalRequestMapping = getGeneralRequestMapping(controller);
             for (Method method : controller.getDeclaredMethods()) {
-                if (ignoreMethodForDocumentation(generalRequestMapping, method)) {
-                    reporter.addIgnoredMethod(controller, method.toString());
-                    continue;
-                }
-                if (methodHasRequestMapping(method)) {
-                    String path = getRequestMapping(generalRequestMapping, method);
-                    requestMappings.add(path);
-                    DocDomain domain = getDomain(method);
-                    domain.setErrorList(errorList);
-                    addOperation(method, path, domain);
-                    reporter.addDocumentedMethod(controller, method.toString());
+                try {
+                    if (ignoreMethodForDocumentation(generalRequestMapping, method)) {
+                        reporter.addIgnoredMethod(controller, method.toString());
+                        continue;
+                    }
+                    if (methodHasRequestMapping(method)) {
+                        String path = getRequestMapping(generalRequestMapping, method);
+                        requestMappings.add(path);
+                        DocDomain domain = getDomain(method);
+                        domain.setErrorList(errorList);
+                        addOperation(method, path, domain);
+                        reporter.addDocumentedMethod(controller, method.toString());
+                    }
+                } catch (UndocumentedMethodException ex) {
+                    System.out.println("UNDOCUMENTED METHOD: "+ex.getMessage());
+                    reporter.addUndocumentedMethod(controller, method.toString());
                 }
 
             }
@@ -87,15 +100,19 @@ public class SpringParser {
     }
 
     private Set<DocError> getListOfPossibleErrors(Class<?> controller) {
-        Class<?> stopInspectionAtControllerClass = getClassByName(config.getControllerClassToStopErrorInspection());
+        Class<?> stopInspectionAtControllerClass = null;
+        if(StringUtils.isNotBlank(config.getControllerClassToStopErrorInspection())) {
+            stopInspectionAtControllerClass = getClassByName(config.getControllerClassToStopErrorInspection());
+        }
         return getListOfPossibleErrors(controller, stopInspectionAtControllerClass, InstanceCreator.createInstanceOf(controller), new TreeSet<DocError>());
     }
 
     private void addCommonListOfPossibleErrors() {
-        Class<?> abstractControllerClass = getClassByName(config.getAbstractControllerClassForCommonExceptionHandlers());
-        Class<?> instanceControllerClass = getClassByName(config.getInstanceControllerClassForCommonExceptionHandlers());
-        listOfCommonErrors.addAll(
-                getListOfPossibleErrors(abstractControllerClass, null, InstanceCreator.createInstanceOf(instanceControllerClass), new TreeSet<DocError>()));
+        if(StringUtils.isNotBlank(config.getAbstractControllerClassForCommonExceptionHandlers()) && StringUtils.isNotBlank(config.getInstanceControllerClassForCommonExceptionHandlers())) {
+            Class<?> abstractControllerClass = getClassByName(config.getAbstractControllerClassForCommonExceptionHandlers());
+            Class<?> instanceControllerClass = getClassByName(config.getInstanceControllerClassForCommonExceptionHandlers());
+            listOfCommonErrors.addAll(getListOfPossibleErrors(abstractControllerClass, null, InstanceCreator.createInstanceOf(instanceControllerClass), new TreeSet<DocError>()));
+        }
     }
 
     private Set<DocError> getListOfPossibleErrors(Class<?> controller, Class<?> stopAtAbstractController, Object controllerInstance,
@@ -182,7 +199,7 @@ public class SpringParser {
     }
 
     private boolean hasNoDocumentation(Class<?> documentation, Class<?> controller) {
-        if (documentation == null) {
+        if (documentation == null || !documentation.isAnnotationPresent(DomainDescription.class)) {
             reporter.addUndocumentedController(controller);
             for (Method method : controller.getDeclaredMethods()) {
                 if (method.isAnnotationPresent(RequestMapping.class)) {
@@ -267,7 +284,7 @@ public class SpringParser {
             return false;
         } else {
             if (methodHasRequestMapping(method)) {
-                throw new RuntimeException("No documented method " + method.getName() + ". Maybe signature has changed?");
+                throw new UndocumentedMethodException("No documented method " + method.getName() + " found. Maybe signature has changed?");
             } else {
                 return true;
             }
@@ -292,11 +309,15 @@ public class SpringParser {
     }
 
     private Method getMethodFromDocumentation(Method method) {
-        Class<?> documentation = getDocumentation(method.getDeclaringClass());
-        try {
-            return documentation.getDeclaredMethod(method.getName(), method.getParameterTypes());
-        } catch (NoSuchMethodException | SecurityException e) {
-            return null;
+        if(StringUtils.isNotBlank(config.getDocumentationSuffix())) {
+            Class<?> documentation = getDocumentation(method.getDeclaringClass());
+            try {
+                return documentation.getDeclaredMethod(method.getName(), method.getParameterTypes());
+            } catch (NoSuchMethodException | SecurityException e) {
+                return null;
+            }
+        } else {
+            return method;
         }
     }
 
@@ -313,6 +334,7 @@ public class SpringParser {
     }
 
     private void addOperation(Method method, String path, DocDomain domain) {
+        OperationDescription operationDescription = getOperationDescription(method);
         DocOperation operation = new DocOperation();
         operation.setHttpMethod(getHttpMethod(method));
         operation.setResponseClass(getResponseClass(method));
@@ -320,7 +342,6 @@ public class SpringParser {
         operation.setPath(path);
         operation.setParameters(getParametersOfMethod(method, path));
         operation.setRole(getRoleFromMethod(method));
-        OperationDescription operationDescription = getOperationDescription(method);
         if (operationDescription != null) {
             if (StringUtils.isNotBlank(operationDescription.nickname())) {
                 operation.setNickname(operationDescription.nickname());
@@ -340,8 +361,7 @@ public class SpringParser {
         if (documentedMethod.isAnnotationPresent(OperationDescription.class)) {
             return documentedMethod.getAnnotation(OperationDescription.class);
         }
-        System.err.println("Method " + method.getName() + " (" + method.toString() + ") is not documented");
-        return null;
+        throw new UndocumentedMethodException("No Operation description found at method "+method.toString());
     }
 
     private String getRoleFromMethod(Method method) {
@@ -500,7 +520,7 @@ public class SpringParser {
         if (documentedMethod.isAnnotationPresent(ParameterDescription.class)) {
             return documentedMethod.getAnnotation(ParameterDescription.class);
         }
-        throw new RuntimeException("No parameter description found on method " + method.getName());
+        throw new UndocumentedMethodException("No parameter description found at method " + method.getName());
     }
 
     private void addPathVariableParametersToDocParameter(String apiPath, Matcher pathMatcher, ParameterDescription parameterDescription,
