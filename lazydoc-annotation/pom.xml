@@ -13,5 +13,9 @@
     <artifactId>lazydoc-annotation</artifactId>
     <version>1.0.0-SNAPSHOT</version>
 
+    <name>${project.groupId}:${project.artifactId}</name>
+    <description>Annotations to describe the REST API functionality.</description>
+    <url>http://lazydoc.org</url>
+
 
 </project>

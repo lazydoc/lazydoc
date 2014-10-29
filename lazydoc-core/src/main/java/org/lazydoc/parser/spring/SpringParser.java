@@ -172,9 +172,7 @@ public class SpringParser {
     private Class<?> getDocumentation(Class<?> controller) {
         if (StringUtils.isNotBlank(config.getDocumentationSuffix())) {
             try {
-                String documentationName = controller.getName() + config.getDocumentationSuffix();
-                System.out.println("Documentation name: "+documentationName);
-                return getClassByName(documentationName);
+                return getClassByName(controller.getName() + config.getDocumentationSuffix());
             } catch (RuntimeException ex) {
                 return null;
             }
