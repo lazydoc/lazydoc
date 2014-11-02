@@ -191,6 +191,7 @@ public class SpringParser {
             try {
                 return getClassByName(controller.getName() + config.getDocumentationSuffix());
             } catch (RuntimeException ex) {
+                System.out.println("Could not find controller documentation in class "+controller.getName() + config.getDocumentationSuffix());
                 return null;
             }
         } else {

@@ -1,6 +1,7 @@
 package org.lazydoc.example.spring.entity;
 
 import org.lazydoc.annotation.PropertyDescription;
+import org.lazydoc.annotation.Sample;
 
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -11,22 +12,19 @@ public class Customer {
 
     @Id
     @GeneratedValue
-    @PropertyDescription(description = "The id of the customer")
+    @PropertyDescription(description = "customerId")
     private long customerId;
-
-    @PropertyDescription(description = "The last name of the customer")
+    @PropertyDescription(description = "lastname")
+    @Sample("Müller")
     private String lastname;
-
-    @PropertyDescription(description = "The first name of the customer")
+    @PropertyDescription(description = "lastname")
+    @Sample("Maxi")
     private String firstname;
-
-    @PropertyDescription(description = "The street of the customer")
+    @PropertyDescription(description = "lastname")
     private String street;
-
-    @PropertyDescription(description = "The zip code of the customer")
+    @PropertyDescription(description = "lastname")
     private String zipCode;
-
-    @PropertyDescription(description = "The city of the customer")
+    @PropertyDescription(description = "lastname")
     private String city;
 
     public long getCustomerId() {

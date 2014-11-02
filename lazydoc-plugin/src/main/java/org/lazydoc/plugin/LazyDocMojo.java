@@ -16,29 +16,48 @@ package org.lazydoc.plugin;
  * limitations under the License.
  */
 
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.plugins.annotations.*;
 import org.lazydoc.config.Config;
-import org.lazydoc.parser.DocumentationParser;
+import org.lazydoc.LazyDoc;
 
-@Mojo(name = "generate-apidoc", defaultPhase = LifecyclePhase.COMPILE, executionStrategy = "always")
-@Execute(goal = "generate-apidoc", phase = LifecyclePhase.COMPILE)
+import java.io.File;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.util.ArrayList;
+import java.util.List;
+
+@Mojo(name = "document", defaultPhase = LifecyclePhase.COMPILE, executionStrategy = "always")
+@Execute(goal = "document", phase = LifecyclePhase.COMPILE)
 public class LazyDocMojo extends AbstractMojo {
 
 
     @Parameter
     private Config config;
 
+    @Parameter(property = "project.compileClasspathElements", required = true, readonly = true)
+    private List<String> classpath;
+
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
         Log log = getLog();
-        log.info("PackageToSearchForControllers " + config.getPackageToSearchForControllers());
-
+        log.info("Using classpath: "+ StringUtils.join(classpath, ","));
+        log.info(config.toString());
         try {
-            new DocumentationParser(config).parseDocumentation();
+
+            List<URL> classpathUrls = new ArrayList<>();
+            for(String classpathUrl : classpath) {
+                classpathUrls.add(new File(classpathUrl).toURI().toURL());
+            }
+            ClassLoader classLoader = URLClassLoader.newInstance(classpathUrls.toArray(new URL[classpathUrls.size()]), Thread.currentThread().getContextClassLoader() );
+            Thread.currentThread().setContextClassLoader(classLoader);
+
+            new LazyDoc(config).document();
         } catch (Exception e) {
             getLog().error("Error parsing for documentation.", e);
             throw new MojoFailureException("Error parsing for documentation."+e.getMessage());

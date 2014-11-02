@@ -17,6 +17,7 @@ public class Config {
     private String instanceControllerClassForCommonExceptionHandlers;
     private String controllerClassToStopErrorInspection;
     private List<PrinterConfig> printerConfigs = new ArrayList<>();
+    private boolean breakOnUndocumented = false;
 
     public String getCustomAnnotationToBeIgnored() {
 		return customAnnotationToBeIgnored;
@@ -108,4 +109,29 @@ public class Config {
         this.controllerClassToStopErrorInspection = controllerClassToStopErrorInspection;
     }
 
+    @Override
+    public String toString() {
+        return "Config{" +
+                "customAnnotationToBeIgnored='" + customAnnotationToBeIgnored + '\'' +
+                ", dataTypeSuffix='" + dataTypeSuffix + '\'' +
+                ", documentationSuffix='" + documentationSuffix + '\'' +
+                ", packageToSearchForControllers='" + packageToSearchForControllers + '\'' +
+                ", exceptionHandlerInvoker='" + exceptionHandlerInvoker + '\'' +
+                ", baseDTOClassname='" + baseDTOClassname + '\'' +
+                ", swaggerBasePath='" + swaggerBasePath + '\'' +
+                ", abstractControllerClassForCommonExceptionHandlers='" + abstractControllerClassForCommonExceptionHandlers + '\'' +
+                ", stopInspectionAtAbstractController='" + stopInspectionAtAbstractController + '\'' +
+                ", instanceControllerClassForCommonExceptionHandlers='" + instanceControllerClassForCommonExceptionHandlers + '\'' +
+                ", controllerClassToStopErrorInspection='" + controllerClassToStopErrorInspection + '\'' +
+                ", printerConfigs=" + printerConfigs +
+                '}';
+    }
+
+    public boolean isBreakOnUndocumented() {
+        return breakOnUndocumented;
+    }
+
+    public void setBreakOnUndocumented(boolean breakOnUndocumented) {
+        this.breakOnUndocumented = breakOnUndocumented;
+    }
 }

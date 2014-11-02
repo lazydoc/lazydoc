@@ -77,6 +77,17 @@ public class DocumentationReporter {
         getModelDocumentationProgress(model).getIgnoredFields().add(fieldName);
     }
 
+    public int getUndocumentedCount() {
+        int undocumented = 0;
+        for(ControllerDocumentationProgress controller : controllersProgress.values()) {
+            undocumented += controller.getUndocumentedErrorHandlers().size() + controller.getUndocumentedMethods().size();
+        }
+        for(ModelDocumentationProgress model : modelsProgress.values()) {
+            undocumented += model.getUndocumentedFields().size();
+        }
+        return undocumented;
+    }
+
 
     private ControllerDocumentationProgress getControllerDocumentationProgress(Class<?> controller) {
         ControllerDocumentationProgress controllerProgress = controllersProgress.get(controller);

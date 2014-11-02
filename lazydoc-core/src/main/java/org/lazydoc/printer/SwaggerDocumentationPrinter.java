@@ -3,37 +3,38 @@ package org.lazydoc.printer;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.lazydoc.config.PrinterConfig;
 import org.lazydoc.model.*;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import static org.apache.commons.lang3.StringUtils.join;
 
 public class SwaggerDocumentationPrinter extends DocumentationPrinter {
 
-	@Override
-	public void print(Map<Integer, DocDomain> domains, Map<String, DocDataType> dataTypes, String target, Set<DocError> listOfCommonErrors)
-			throws Exception {
-		this.domains = domains;
-		this.dataTypes = dataTypes;
-		this.listOfCommonErrors = listOfCommonErrors;
-		printSwaggerToJsp(target);
-	}
+    private Set<String> models = new HashSet<>();
 
-	private void printSwaggerToJsp(String target) throws Exception {
+    @Override
+    public void print(PrinterConfig printerConfig) throws Exception {
+        this.printerConfig = printerConfig;
+        printSwaggerToJsp();
+    }
+
+    private String getDataTypeFilename(String name) {
+        return "_types/" + name.toLowerCase() + ".jsp";
+    }
+
+	private void printSwaggerToJsp() throws Exception {
 		addDomainsAndDataTypesToFilelist();
 		createDiscover();
-		createAndWriteViewControllerXml(target);
-		writeFiles(FilenameUtils.normalizeNoEndSeparator(target) + "/views/");
+        createAndWriteViewController();
+		writeFiles(FilenameUtils.normalize(printerConfig.getOutputPath()));
 	}
 
 	private void addDomainsAndDataTypesToFilelist() {
-		for (DocDomain domain : domains.values()) {
+		for (DocDomain domain : printerConfig.getDomains().values()) {
 			if (domain.getSubDomains().isEmpty()) {
 				files.put("api/" + domain.getDomain().toLowerCase() + ".jsp", printDomainToJson(domain));
 			} else {
@@ -43,32 +44,40 @@ public class SwaggerDocumentationPrinter extends DocumentationPrinter {
 				}
 			}
 		}
-		for (DocDataType dataType : dataTypes.values()) {
+		for (DocDataType dataType : printerConfig.getDataTypes().values()) {
 			files.put(getDataTypeFilename(dataType.getName()), printDataTypeToJson(dataType));
 		}
 	}
 
 	public String printDomainToJson(DocDomain domain) {
-		return printDomainOrSubDomainToJson(domain.getOperations(), domain.getDomain(), domain.getBasePath());
+		return printDomainOrSubDomainToJson(domain.getOperations(), domain.getDomain());
 	}
 
 	public String printSubDomainToJson(Map<String, String> files, DocSubDomain subDomain) {
-		return printDomainOrSubDomainToJson(subDomain.getOperations(), subDomain.getDomain() + "-" + subDomain.getSubDomain(),
-				subDomain.getBasePath());
+		return printDomainOrSubDomainToJson(subDomain.getOperations(), subDomain.getDomain() + "-" + subDomain.getSubDomain());
 	}
 
-	public String printDomainOrSubDomainToJson(Set<DocOperation> docOperations, String domainName, String basePath) {
+	public String printDomainOrSubDomainToJson(Set<DocOperation> docOperations, String domainName) {
+        models.clear();
+        String basePath = printerConfig.getParams().get("swagger.basepath");
+        if(StringUtils.isBlank(basePath)) {
+            throw new RuntimeException("Please provide the swagger.basepath in the printer config params");
+        }
+
 		String json = "<%@ page contentType=\"application/json; charset=UTF-8\" %>\n";
 		json += "{\n";
-		json += "   \"basePath\": \"" + basePath + "\",\n";
+        json += "   \"basePath\": \"" + basePath + "\",\n";
 		json += "   \"apis\": [\n";
 		List<String> apis = new ArrayList<String>();
-		for (DocOperation operation : docOperations) {
-			apis.add(printApiOperationToJson(domainName, operation));
-		}
-		json += join(apis, ",\n");
-		json += "   ]\n";
-		json += "}\n";
+        for (DocOperation operation : docOperations) {
+            apis.add(printApiOperationToJson(domainName, operation));
+        }
+        json += join(apis, ",\n");
+        json += "   ],\n";
+        json += "   \"models\": {\n";
+        json += StringUtils.join(models, ",");
+        json += "   }\n";
+        json += "}\n";
 
 		return json;
 	}
@@ -123,10 +132,23 @@ public class SwaggerDocumentationPrinter extends DocumentationPrinter {
 		json += "   \"allowMultiple\": " + parameter.isAllowMultiple() + ",\n";
 		json += "   \"list\": " + parameter.isList() + "\n";
 		json += "}\n";
-		return json;
+
+        addModelOfParameter(parameter.getDataType());
+
+        return json;
 	}
 
-	public String printDataTypeToJson(DocDataType dataType) {
+    private void addModelOfParameter(String dataType) {
+        DocDataType docDataType = printerConfig.getDataTypes().get(dataType);
+        if (docDataType != null) {
+            models.add("           <%@include file=\"" + getDataTypeFilename(dataType) + "\" %>");
+            for(DocProperty property : docDataType.getProperties()) {
+                addModelOfParameter(property.getType());
+            }
+        }
+    }
+
+    public String printDataTypeToJson(DocDataType dataType) {
 		List<String> properties = new ArrayList<String>();
 		String json = "\"" + dataType.getName() + "\": {\n";
 		json += "   \"properties\": {\n";
@@ -161,35 +183,39 @@ public class SwaggerDocumentationPrinter extends DocumentationPrinter {
 		return json;
 	}
 
-	private void createAndWriteViewControllerXml(String target) throws IOException {
+	private void createAndWriteViewController() throws IOException {
+        String viewPropertiesFilename = printerConfig.getParams().get("swagger.views.properties.filename");
+        String swaggerDirectoryName = printerConfig.getParams().get("swagger.directory.name");
+
+        if(StringUtils.isBlank(viewPropertiesFilename)) {
+            throw new RuntimeException("Please provide the swagger.views.properties.filename in printer config params");
+        }
+        if(StringUtils.isBlank(swaggerDirectoryName)) {
+            throw new RuntimeException("Please provide the swagger.directory.name in printer config params");
+        }
+
 		List<String> mvcViews = new ArrayList<String>();
-		mvcViews.add("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
-		mvcViews.add("<beans xmlns=\"http://www.springframework.org/schema/beans\"");
-		mvcViews.add("xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"");
-		mvcViews.add("xmlns:context=\"http://www.springframework.org/schema/context\"");
-		mvcViews.add("xmlns:mvc=\"http://www.springframework.org/schema/mvc\"");
-		mvcViews.add("xsi:schemaLocation=\"http://www.springframework.org/schema/mvc");
-		mvcViews.add("http://www.springframework.org/schema/mvc/spring-mvc-3.1.xsd http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.1.xsd http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.1.xsd\">");
-		for (DocDomain domain : domains.values()) {
+		for (DocDomain domain : printerConfig.getDomains().values()) {
 			if (!domain.getOperations().isEmpty()) {
-				mvcViews.add("<mvc:view-controller path=\"/discover/" + StringUtils.capitalize(domain.getDomain()) + "\" view-name=\"/api/"
-						+ domain.getDomain().toLowerCase() + "\" />");
-			}
+                addViewMapping(mvcViews, domain, swaggerDirectoryName);
+            }
 			for (DocSubDomain subDomain : domain.getSubDomains().values()) {
-				mvcViews.add("<mvc:view-controller path=\"/discover/"
-						+ StringUtils.capitalize(domain.getDomain() + "-" + subDomain.getSubDomain()) + "\" view-name=\"/api/"
-						+ (domain.getDomain() + "-" + subDomain.getSubDomain()).toLowerCase() + "\" />");
-			}
+                addViewMapping(mvcViews, domain, swaggerDirectoryName);
+            }
 		}
-		mvcViews.add("</beans>");
-		File viewControllers = new File(target + "/spring/view-controller.xml");
+
+        File viewControllers = new File(viewPropertiesFilename);
 		viewControllers.getParentFile().mkdirs();
 		FileUtils.writeLines(viewControllers, mvcViews);
 	}
 
-	private void createDiscover() {
+    private void addViewMapping(List<String> mvcViews, DocDomain domain, String swaggerDirectoryName) {
+        mvcViews.add("/discover/" + StringUtils.capitalize(domain.getDomain()) + "=/" + swaggerDirectoryName + "/" + domain.getDomain().toLowerCase());
+    }
+
+    private void createDiscover() {
 		List<String> apis = new ArrayList<String>();
-		for (DocDomain domain : domains.values()) {
+		for (DocDomain domain : printerConfig.getDomains().values()) {
 			if (!domain.getOperations().isEmpty()) {
 				apis.add(createApiPathJson(domain));
 			}
@@ -197,20 +223,12 @@ public class SwaggerDocumentationPrinter extends DocumentationPrinter {
 				apis.add(createApiPathJson(subDomain));
 			}
 		}
-		List<String> models = new ArrayList<String>();
-		for (String name : dataTypes.keySet()) {
-			models.add("           <%@include file=\"" + getDataTypeFilename(name) + "\" %>");
-		}
 
 		String json = "<%@ page contentType=\"application/json; charset=UTF-8\" %>\n";
 		json += "{\n";
-		json += "        <%@include file=\"includes/path.jsp\" %>\n";
 		json += "       \"apis\":[\n";
 		json += join(apis, ",\n") + "\n";
-		json += "       ],\n";
-		json += "       \"models\": {\n";
-		json += join(models, ",\n") + "\n";
-		json += "       }\n";
+		json += "       ]\n";
 		json += "}\n";
 		files.put("discover.jsp", json);
 	}
@@ -221,10 +239,6 @@ public class SwaggerDocumentationPrinter extends DocumentationPrinter {
 		api += "                \"description\": \"" + domain.getDescription() + "\"\n";
 		api += "          }";
 		return api;
-	}
-
-	private String getDataTypeFilename(String name) {
-		return "api/_types/" + name.toLowerCase() + ".jsp";
 	}
 
 }
