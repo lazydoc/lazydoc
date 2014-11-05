@@ -144,8 +144,8 @@ public class DocumentationReporter {
         System.out.println("Undocumented fields: " + undocumentedFields);
         System.out.println("Ignored fields: " + ignoredFields);
         System.out.println("-----------------------------------------------------------------------------------------------------------");
-        System.out.println("Documentation coverage: " + new DecimalFormat("0.00").format(documentationCoverage) + "%");
-        System.out.println("Documentation coverage without ignored: " + new DecimalFormat("0.00").format(documentationCoverageWithoutIgnored) + "%");
+        System.out.println("Documentation coverage: " + (Double.isNaN(documentationCoverage) ? "0.00" : new DecimalFormat("0.00").format(documentationCoverage)) + "%");
+        System.out.println("Documentation coverage without ignored: " + (Double.isNaN(documentationCoverageWithoutIgnored) ? "0.00" : ""+ new DecimalFormat("0.00").format(documentationCoverageWithoutIgnored)) + "%");
         System.out.println("-----------------------------------------------------------------------------------------------------------");
 
     }
@@ -177,7 +177,6 @@ public class DocumentationReporter {
         System.out.println(" Documented Controllers:");
         System.out.println("#############################");
         for (ControllerDocumentationProgress controllerDocumentationProgress : controllersProgress.values()) {
-            System.out.println("Controller " + controllerDocumentationProgress.getController().getSimpleName());
             if (!controllerDocumentationProgress.isIgnored() && !controllerDocumentationProgress.isUndocumented()) {
                 printMethodsOfController(controllerDocumentationProgress);
 

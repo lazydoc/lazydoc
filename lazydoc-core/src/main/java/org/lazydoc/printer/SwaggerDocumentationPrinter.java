@@ -23,7 +23,7 @@ public class SwaggerDocumentationPrinter extends DocumentationPrinter {
     }
 
     private String getDataTypeFilename(String name) {
-        return "_types/" + name.toLowerCase() + ".jsp";
+        return "api/_types/" + name.toLowerCase() + ".jsp";
     }
 
 	private void printSwaggerToJsp() throws Exception {
@@ -98,7 +98,7 @@ public class SwaggerDocumentationPrinter extends DocumentationPrinter {
 	public String printOperationToJson(DocOperation operation) {
 		List<String> parameters = new ArrayList<String>();
 		String json = "{\n";
-		json += "   \"httpMethod\": \"" + operation.getHttpMethod() + "\",\n";
+		json += "   \"method\": \"" + operation.getHttpMethod() + "\",\n";
 		json += "   \"nickname\": \"" + operation.getNickname() + "\",\n";
 		json += "   \"responseClass\": \"" + operation.getResponseClass() + "\",\n";
 		json += "   \"parameters\": [\n";
@@ -127,7 +127,7 @@ public class SwaggerDocumentationPrinter extends DocumentationPrinter {
 			json += "   \"name\": \"" + parameter.getName() + "\",\n";
 		}
 		json += "   \"description\": \"" + parameter.getDescription() + "\",\n";
-		json += "   \"dataType\": \"" + parameter.getDataType() + "\",\n";
+		json += "   \"type\": \"" + parameter.getDataType() + "\",\n";
 		json += "   \"required\": " + parameter.isRequired() + ",\n";
 		json += "   \"allowMultiple\": " + parameter.isAllowMultiple() + ",\n";
 		json += "   \"list\": " + parameter.isList() + "\n";
@@ -141,7 +141,7 @@ public class SwaggerDocumentationPrinter extends DocumentationPrinter {
     private void addModelOfParameter(String dataType) {
         DocDataType docDataType = printerConfig.getDataTypes().get(dataType);
         if (docDataType != null) {
-            models.add("           <%@include file=\"" + getDataTypeFilename(dataType) + "\" %>");
+            models.add("           <%@include file=\"" + getDataTypeFilename(dataType).replaceAll("api/", "") + "\" %>");
             for(DocProperty property : docDataType.getProperties()) {
                 addModelOfParameter(property.getType());
             }
@@ -197,10 +197,10 @@ public class SwaggerDocumentationPrinter extends DocumentationPrinter {
 		List<String> mvcViews = new ArrayList<String>();
 		for (DocDomain domain : printerConfig.getDomains().values()) {
 			if (!domain.getOperations().isEmpty()) {
-                addViewMapping(mvcViews, domain, swaggerDirectoryName);
+                addViewMapping(mvcViews, domain.getDomain(), swaggerDirectoryName);
             }
 			for (DocSubDomain subDomain : domain.getSubDomains().values()) {
-                addViewMapping(mvcViews, domain, swaggerDirectoryName);
+                addViewMapping(mvcViews, domain.getDomain()+"-"+subDomain.getSubDomain(), swaggerDirectoryName);
             }
 		}
 
@@ -209,8 +209,8 @@ public class SwaggerDocumentationPrinter extends DocumentationPrinter {
 		FileUtils.writeLines(viewControllers, mvcViews);
 	}
 
-    private void addViewMapping(List<String> mvcViews, DocDomain domain, String swaggerDirectoryName) {
-        mvcViews.add("/discover/" + StringUtils.capitalize(domain.getDomain()) + "=/" + swaggerDirectoryName + "/" + domain.getDomain().toLowerCase());
+    private void addViewMapping(List<String> mvcViews, String domain, String swaggerDirectoryName) {
+        mvcViews.add("/discover/" + StringUtils.capitalize(domain) + "=/" + swaggerDirectoryName + "/" + domain.toLowerCase());
     }
 
     private void createDiscover() {

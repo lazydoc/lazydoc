@@ -37,11 +37,15 @@ public class DocBookDocumentationPrinter extends DocumentationPrinter {
     }
 
     private void createApiDocXML() {
+        String docbookFilename = printerConfig.getParams().get("docbook.filename");
+        if(StringUtils.isBlank(docbookFilename)) {
+            throw new RuntimeException("Please provide the docbook.filename in printer config params");
+        }
         String xml = printVersion();
         xml += printStartTagWithAttributes(
                 "book",
                 "xmlns=\"http://docbook.org/ns/docbook\" xml:lang=\"en\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" xmlns:xi=\"http://www.w3.org/2001/XInclude\" xmlns:svg=\"http://www.w3.org/2000/svg\" xmlns:m=\"http://www.w3.org/1998/Math/MathML\" xmlns:html=\"http://www.w3.org/1999/xhtml\" version=\"5.0\"");
-        xml += "<?dbhtml dir=\"apidoc-gen\" ?>";
+        xml += "<?dbhtml dir=\""+docbookFilename.replaceAll(".xml", "")+"\" ?>";
 
         xml += printShortTag("toc");
 
@@ -51,7 +55,7 @@ public class DocBookDocumentationPrinter extends DocumentationPrinter {
         xml += printCommonErrorDescriptions();
 
         xml += printEndTag("book");
-        files.put("/apidoc-gen.xml", prettyFormat(xml, 4));
+        files.put("/"+docbookFilename, prettyFormat(xml, 4));
     }
 
     private void createChapters() {
