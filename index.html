@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <meta name="description" content="Lazydoc : A framework for automatic REST-API documentation">
+
+    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
+
+    <title>Lazydoc</title>
+  </head>
+
+  <body>
+
+    <!-- HEADER -->
+    <div id="header_wrap" class="outer">
+        <header class="inner">
+          <a id="forkme_banner" href="https://github.com/lazydoc/lazydoc">View on GitHub</a>
+
+          <h1 id="project_title">Lazydoc</h1>
+          <h2 id="project_tagline">A framework for automatic REST-API documentation</h2>
+
+            <section id="downloads">
+              <a class="zip_download_link" href="https://github.com/lazydoc/lazydoc/zipball/master">Download this project as a .zip file</a>
+              <a class="tar_download_link" href="https://github.com/lazydoc/lazydoc/tarball/master">Download this project as a tar.gz file</a>
+            </section>
+        </header>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div id="main_content_wrap" class="outer">
+      <section id="main_content" class="inner">
+        <p>Lazydoc is a modular framework to collect documentation data from your source code and generate artifacts for documentation frameworks like Swagger, DocBook, etc.</p>
+
+<h1>
+<a id="getting-started" class="anchor" href="#getting-started" aria-hidden="true"><span class="octicon octicon-link"></span></a>Getting Started</h1>
+
+<p>To use lazydoc you have to create a small java class which configures and executes lazydoc. The goal is to replace this with a maven plugin, but at the moment there are problems with class loading. As soon as this is solved this section will be updated.</p>
+
+<p>Lazydoc is currently just supporting a parser for Spring REST, but it will also support JAX-RS and other REST frameworks in the future.</p>
+
+<h3>
+<a id="lazydoc-configuration-class" class="anchor" href="#lazydoc-configuration-class" aria-hidden="true"><span class="octicon octicon-link"></span></a>Lazydoc configuration class</h3>
+
+<pre><code>  public class ExampleDocParser {
+
+      public static void main(String[] args) throws Exception {
+          Config config = new Config();
+          config.setPackageToSearchForControllers("org.lazydoc.example");
+          new LazyDoc(config).document();
+      }
+  }
+</code></pre>
+
+<p>To get started you just need to set the package where lazydoc should search for controllers. Now just start it with the maven java exec plugin. As main class use the class you created. As argument the project basedir is provided which is used to point the generators to the path they should create the artifacts.</p>
+
+<pre><code>  &lt;plugin&gt;
+      &lt;groupId&gt;org.codehaus.mojo&lt;/groupId&gt;
+      &lt;artifactId&gt;exec-maven-plugin&lt;/artifactId&gt;
+      &lt;version&gt;1.1.1&lt;/version&gt;
+      &lt;executions&gt;
+         &lt;execution&gt;
+            &lt;phase&gt;compile&lt;/phase&gt;
+            &lt;goals&gt;
+               &lt;goal&gt;java&lt;/goal&gt;
+            &lt;/goals&gt;
+            &lt;configuration&gt;
+                &lt;includeProjectDependencies&gt;true&lt;/includeProjectDependencies&gt;
+                &lt;mainClass&gt;org.lazydoc.example.simple.doc.ExampleDocParser&lt;/mainClass&gt;
+                &lt;arguments&gt;
+                    &lt;argument&gt;${project.basedir}/&lt;/argument&gt;
+                &lt;/arguments&gt;
+            &lt;/configuration&gt;
+         &lt;/execution&gt;
+      &lt;/executions&gt;
+  &lt;/plugin&gt;
+</code></pre>
+
+<h3>
+<a id="documenting-an-controller" class="anchor" href="#documenting-an-controller" aria-hidden="true"><span class="octicon octicon-link"></span></a>Documenting an controller</h3>
+
+<p>Lazydoc is using an annotation based approache to add the additional information which is needed to generate the documentation artifacts. The following example shows the usage of the annotations. See detailed description of the annotations below.</p>
+
+<pre><code>@Controller
+@DomainDescription(order = 1, name = "Customer", description="Operations for customer management")
+public class RestfulCustomerController {
+    ....
+    @RequestMapping(value = "/customers/{customerId}", method = RequestMethod.GET)
+    @OperationDescription(description = "Returns the customer for the given id")
+    @ParameterDescription({@Parameter(name="customerId", description = "The id of the customer to be returned")})
+    @ResponseDescription(description = "The customer requested by id")
+    public @ResponseBody Customer getCustomer(@PathVariable long customerId) {
+        ....
+    }
+
+    @RequestMapping(value = "/customers", method = RequestMethod.POST)
+    @OperationDescription(description = "Creates a new customer")
+    @ParameterDescription({@Parameter(name="requestBody", description = "The data of the customer to be created")})
+    @ResponseDescription(description = "The newly created customer")
+    public @ResponseBody Customer createCustomer(@RequestBody Customer customer) {
+        ....
+    }
+
+    @RequestMapping(value = "/customers/{customerId}", method = RequestMethod.PUT)
+    @OperationDescription(description = "Updates a customer specified by the id")
+    @ParameterDescription({
+            @Parameter(name = "customerId", description = "The id of the customer to be updated"),
+            @Parameter(name="requestBody", description = "The data of the customer to be created")})
+    @ResponseDescription(description = "The updated customer")
+    public @ResponseBody Customer updateCustomer(@PathVariable long customerId, @RequestBody Customer customer) {
+        ....
+    }
+
+    @ExceptionHandler(CustomerNotFoundException.class)
+    @ResponseStatus(value = HttpStatus.NOT_FOUND)
+    @ErrorDescription(description = "This error occurs if the customer was not found")
+    public @ResponseBody
+    String handleException(Exception ex) {
+        return "The customer was not found";
+    }
+
+}
+</code></pre>
+
+<p>In this example the annotations for documentation are put directly in the controller class. But this litters the class too much. Lazydoc offers the possibility to put the documentation annotations in a different class. Currently there is just a strategy to configure a suffix for the controller class to lookup the documentation class. So for example if your controller is <strong>RestfulCustomerController</strong> and your suffix is <strong>Documentation</strong>, lazydoc will look for a (abstract) class or interface with the name <strong>RestfulCustomerControllerDocumentation</strong> in the same package. The package with the documentation class can be in a different project as long as it is accessible in the compile phase.</p>
+
+<h1>
+<a id="configuration" class="anchor" href="#configuration" aria-hidden="true"><span class="octicon octicon-link"></span></a>Configuration</h1>
+
+<p></p>
+
+<h4>
+<a id="config" class="anchor" href="#config" aria-hidden="true"><span class="octicon octicon-link"></span></a>Config</h4>
+
+<ul>
+<li>packageToSearchForControllers</li>
+<li>breakOnUndocumented</li>
+<li>documentationSuffix</li>
+<li>dataTypeSuffix</li>
+<li>baseDTOClassname</li>
+<li>customAnnotationToBeIgnored</li>
+<li>exceptionHandlerInvoker</li>
+<li>abstractControllerClassForCommonExceptionHandlers</li>
+<li>instanceControllerClassForCommonExceptionHandlers</li>
+<li>stopInspectionAtAbstractController</li>
+<li>controllerClassToStopErrorInspection</li>
+</ul>
+
+<h3>
+<a id="printerconfig" class="anchor" href="#printerconfig" aria-hidden="true"><span class="octicon octicon-link"></span></a>PrinterConfig</h3>
+      </section>
+    </div>
+
+    <!-- FOOTER  -->
+    <div id="footer_wrap" class="outer">
+      <footer class="inner">
+        <p class="copyright">Lazydoc maintained by <a href="https://github.com/lazydoc">lazydoc</a></p>
+        <p>Published with <a href="http://pages.github.com">GitHub Pages</a></p>
+      </footer>
+    </div>
+
+    
+
+  </body>
+</html>
