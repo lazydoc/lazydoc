@@ -22,6 +22,10 @@ public class LazyDoc {
 		this.springParser = new SpringParser(config, reporter, dataTypeParser);
 	}
 
+	public static void document(Config config) throws Exception {
+		new LazyDoc(config).document();
+	}
+
 	
 	public void document() throws Exception {
 		springParser.parseSpringControllers();
