@@ -34,8 +34,11 @@ import org.apache.maven.project.MavenProject;
 import org.apache.maven.project.MavenProjectBuilder;
 import org.apache.maven.project.artifact.MavenMetadataSource;
 import org.lazydoc.config.Config;
+import org.lazydoc.config.PrinterConfig;
+import org.springframework.context.annotation.Bean;
 
 import java.io.File;
+import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -58,49 +61,49 @@ public class LazyDocMojo extends AbstractMojo {
     @Component
     private ArtifactMetadataSource metadataSource;
 
-    /**
-     * @since 1.0
-     */
     @Parameter(readonly = true, required = true, defaultValue = "${localRepository}")
     private ArtifactRepository localRepository;
 
-    /**
-     * @since 1.1-beta-1
-     */
     @Parameter(readonly = true, required = true, defaultValue = "${project.remoteArtifactRepositories}")
     private List<ArtifactRepository> remoteRepositories;
 
-    /**
-     * @since 1.0
-     */
     @Component
     private MavenProjectBuilder projectBuilder;
 
-    /**
-     * @since 1.1-beta-1
-     */
     @Parameter(readonly = true, defaultValue = "${plugin.artifacts}")
     private List<Artifact> pluginDependencies;
-
-    @Parameter
-    private Config config;
 
     @Parameter(property = "project.compileClasspathElements", required = true, readonly = true)
     private List<String> classpath;
 
+    @Parameter
+    private Config config;
+
+    @Parameter
+    private List<PrinterConfig> printerConfigs;
+
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
         Log log = getLog();
-        log.info("Using classpath: " + StringUtils.join(classpath, ","));
         log.info(config.toString());
         try {
             ClassLoader classLoader = getClassLoader();
             Thread.currentThread().setContextClassLoader(classLoader);
             Class<?> lazyDocClass = classLoader.loadClass("org.lazydoc.LazyDoc");
             Class<?> lazyDocConfigClass = classLoader.loadClass("org.lazydoc.config.Config");
+            Class<?> lazyDocPrinterConfigClass = classLoader.loadClass("org.lazydoc.config.PrinterConfig");
+            Method addPrinterConfig = lazyDocConfigClass.getDeclaredMethod("addPrinterConfig", lazyDocPrinterConfigClass);
             Object lazydocConfig = lazyDocConfigClass.newInstance();
             BeanUtils.copyProperties(lazydocConfig, config);
-            lazyDocClass.getDeclaredMethod("document", lazyDocConfigClass).invoke(null, lazydocConfig);
+            if (printerConfigs != null) {
+                for(PrinterConfig printerConfig : printerConfigs) {
+                    Object lazydocPrinterConfig = lazyDocPrinterConfigClass.newInstance();
+                    BeanUtils.copyProperties(lazydocPrinterConfig, printerConfig);
+                    addPrinterConfig.invoke(lazydocPrinterConfig);
+                }
+            }
+            Object lazydoc = lazyDocClass.getConstructor(lazyDocConfigClass).newInstance(lazydocConfig);
+            lazyDocClass.getDeclaredMethod("document").invoke(lazydoc);
         } catch (Exception e) {
             getLog().error("Error parsing for documentation.", e);
             throw new MojoFailureException("Error parsing for documentation." + e.getMessage());
@@ -118,8 +121,8 @@ public class LazyDocMojo extends AbstractMojo {
         List<URL> classpathURLs = new ArrayList<URL>();
         this.addRelevantPluginDependenciesToClasspath(classpathURLs);
         this.addRelevantProjectDependenciesToClasspath(classpathURLs);
-        for(URL classpath : classpathURLs) {
-            getLog().info("Classpath: "+classpath.toString());
+        for (URL classpath : classpathURLs) {
+            getLog().info("Classpath: " + classpath.toString());
         }
         return new URLClassLoader(classpathURLs.toArray(new URL[classpathURLs.size()]));
     }
@@ -134,7 +137,7 @@ public class LazyDocMojo extends AbstractMojo {
     private void addRelevantPluginDependenciesToClasspath(List<URL> path)
             throws MojoExecutionException {
         try {
-            for (Artifact classPathElement : new HashSet<Artifact>( this.pluginDependencies )) {
+            for (Artifact classPathElement : new HashSet<Artifact>(this.pluginDependencies)) {
                 getLog().debug("Adding plugin dependency artifact: " + classPathElement.getArtifactId()
                         + " to classpath");
                 path.add(classPathElement.getFile().toURI().toURL());
@@ -144,7 +147,6 @@ public class LazyDocMojo extends AbstractMojo {
         }
 
     }
-
 
 
     /**

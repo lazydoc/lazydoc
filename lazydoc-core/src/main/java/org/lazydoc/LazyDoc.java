@@ -25,13 +25,15 @@ public class LazyDoc {
 	
 	public void document() throws Exception {
 		springParser.parseSpringControllers();
-		for(PrinterConfig printerConfig : config.getPrinterConfigs()) {
-            printerConfig.setDomains(springParser.getDomains());
-            printerConfig.setDataTypes(dataTypeParser.getDataTypes());
-            printerConfig.setListOfCommonErrors(springParser.getListOfCommonErrors());
-            printerConfig.setOutputPath(printerConfig.getOutputPath());
-			DocumentationPrinter printer = (DocumentationPrinter)Class.forName(printerConfig.getClassName()).newInstance();
-			printer.print(printerConfig);
+		if (config.getPrinterConfigs() != null) {
+			for(PrinterConfig printerConfig : config.getPrinterConfigs()) {
+				printerConfig.setDomains(springParser.getDomains());
+				printerConfig.setDataTypes(dataTypeParser.getDataTypes());
+				printerConfig.setListOfCommonErrors(springParser.getListOfCommonErrors());
+				printerConfig.setOutputPath(printerConfig.getOutputPath());
+				DocumentationPrinter printer = (DocumentationPrinter)Class.forName(printerConfig.getClassName()).newInstance();
+				printer.print(printerConfig);
+			}
 		}
 		reporter.printOverallProgressReport();
         if(config.isBreakOnUndocumented() && reporter.getUndocumentedCount() > 0) {

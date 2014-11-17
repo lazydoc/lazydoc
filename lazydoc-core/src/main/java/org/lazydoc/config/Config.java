@@ -92,6 +92,9 @@ public class Config {
         this.printerConfigs = printerConfigs;
     }
 
+    public void addPrinterConfig(PrinterConfig printerConfig) {
+        printerConfigs.add(printerConfig);
+    }
 
     public String getInstanceControllerClassForCommonExceptionHandlers() {
         return instanceControllerClassForCommonExceptionHandlers;

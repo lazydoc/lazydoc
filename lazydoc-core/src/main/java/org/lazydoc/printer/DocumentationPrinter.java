@@ -1,6 +1,8 @@
 package org.lazydoc.printer;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.lazydoc.config.PrinterConfig;
 import org.lazydoc.model.DocDataType;
 import org.lazydoc.model.DocDomain;
@@ -13,6 +15,8 @@ import java.util.*;
 
 public abstract class DocumentationPrinter {
 
+	private Logger log = LogManager.getLogger(this.getClass());
+
 	protected Map<String, String> files = new TreeMap<String, String>();
     protected PrinterConfig printerConfig;
 
@@ -22,7 +26,7 @@ public abstract class DocumentationPrinter {
 		for (String filename : files.keySet()) {
 			File file = new File(target + filename);
 			file.getParentFile().mkdirs();
-			System.out.println("Writing file " + file.getAbsolutePath());
+			log.info("Writing file " + file.getAbsolutePath());
 			FileUtils.write(file, files.get(filename), Charset.forName("UTF-8"));
 		}
 	}

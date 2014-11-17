@@ -19,6 +19,10 @@ public class PrinterConfig {
     protected Map<String, DocDataType> dataTypes;
     protected Set<DocError> listOfCommonErrors = new TreeSet<DocError>();
 
+    public PrinterConfig() {
+        super();
+    }
+
     public PrinterConfig(String className, String outputPath) {
         this.className = className;
         this.outputPath = outputPath;
@@ -74,4 +78,5 @@ public class PrinterConfig {
     public void setListOfCommonErrors(Set<DocError> listOfCommonErrors) {
         this.listOfCommonErrors = listOfCommonErrors;
     }
+
 }
