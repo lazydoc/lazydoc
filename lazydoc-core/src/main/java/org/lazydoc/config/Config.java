@@ -4,7 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Config {
-	
+
+    private boolean breakOnUndocumented = false;
 	private String customAnnotationToBeIgnored;
 	private String dataTypeSuffix;
 	private String documentationSuffix;
@@ -13,11 +14,8 @@ public class Config {
 	private String baseDTOClassname;
 	private String swaggerBasePath;
     private String abstractControllerClassForCommonExceptionHandlers;
-    private String stopInspectionAtAbstractController;
     private String instanceControllerClassForCommonExceptionHandlers;
     private String controllerClassToStopErrorInspection;
-    private List<PrinterConfig> printerConfigs = new ArrayList<>();
-    private boolean breakOnUndocumented = false;
 
     public String getCustomAnnotationToBeIgnored() {
 		return customAnnotationToBeIgnored;
@@ -76,26 +74,6 @@ public class Config {
         this.abstractControllerClassForCommonExceptionHandlers = abstractControllerClassForCommonExceptionHandlers;
     }
 
-    public String getStopInspectionAtAbstractController() {
-        return stopInspectionAtAbstractController;
-    }
-
-    public void setStopInspectionAtAbstractController(String stopInspectionAtAbstractController) {
-        this.stopInspectionAtAbstractController = stopInspectionAtAbstractController;
-    }
-
-    public List<PrinterConfig> getPrinterConfigs() {
-        return printerConfigs;
-    }
-
-    public void setPrinterConfigs(List<PrinterConfig> printerConfigs) {
-        this.printerConfigs = printerConfigs;
-    }
-
-    public void addPrinterConfig(PrinterConfig printerConfig) {
-        printerConfigs.add(printerConfig);
-    }
-
     public String getInstanceControllerClassForCommonExceptionHandlers() {
         return instanceControllerClassForCommonExceptionHandlers;
     }
@@ -123,10 +101,8 @@ public class Config {
                 ", baseDTOClassname='" + baseDTOClassname + '\'' +
                 ", swaggerBasePath='" + swaggerBasePath + '\'' +
                 ", abstractControllerClassForCommonExceptionHandlers='" + abstractControllerClassForCommonExceptionHandlers + '\'' +
-                ", stopInspectionAtAbstractController='" + stopInspectionAtAbstractController + '\'' +
                 ", instanceControllerClassForCommonExceptionHandlers='" + instanceControllerClassForCommonExceptionHandlers + '\'' +
                 ", controllerClassToStopErrorInspection='" + controllerClassToStopErrorInspection + '\'' +
-                ", printerConfigs=" + printerConfigs +
                 '}';
     }
 

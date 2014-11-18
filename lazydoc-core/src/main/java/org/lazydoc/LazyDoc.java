@@ -1,11 +1,18 @@
 package org.lazydoc;
 
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.core.LoggerContext;
+import org.apache.logging.log4j.core.config.Configuration;
+import org.apache.logging.log4j.core.config.LoggerConfig;
 import org.lazydoc.config.Config;
 import org.lazydoc.config.PrinterConfig;
 import org.lazydoc.parser.DataTypeParser;
 import org.lazydoc.parser.spring.SpringParser;
 import org.lazydoc.printer.DocumentationPrinter;
 import org.lazydoc.reporter.DocumentationReporter;
+
+import java.util.List;
 
 public class LazyDoc {
 
@@ -15,18 +22,20 @@ public class LazyDoc {
 	private Config config;
 	
 
-	public LazyDoc(Config config) {
+	public void document(Config config, List printerConfigs, String logLevel) throws Exception {
 		this.config = config;
 		this.reporter = new DocumentationReporter();
 		this.dataTypeParser = new DataTypeParser(reporter, config.getBaseDTOClassname());
 		this.springParser = new SpringParser(config, reporter, dataTypeParser);
-	}
 
-	
-	public void document() throws Exception {
+		LoggerContext ctx = (LoggerContext) LogManager.getContext(false);
+		LoggerConfig loggerConfig = ctx.getConfiguration().getLoggerConfig(LogManager.ROOT_LOGGER_NAME);
+		loggerConfig.setLevel(Level.getLevel(logLevel));
+		ctx.updateLoggers();
+
 		springParser.parseSpringControllers();
-		if (config.getPrinterConfigs() != null) {
-			for(PrinterConfig printerConfig : config.getPrinterConfigs()) {
+		if (printerConfigs != null) {
+			for(PrinterConfig printerConfig : (List<PrinterConfig>)printerConfigs) {
 				printerConfig.setDomains(springParser.getDomains());
 				printerConfig.setDataTypes(dataTypeParser.getDataTypes());
 				printerConfig.setListOfCommonErrors(springParser.getListOfCommonErrors());

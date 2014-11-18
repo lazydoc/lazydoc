@@ -85,6 +85,8 @@ public class LazyDocMojo extends AbstractMojo {
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
         Log log = getLog();
+        String logLevel = log.isDebugEnabled() ? "DEBUG" : log.isWarnEnabled() ? "WARN" : log.isInfoEnabled() ? "INFO" : "ERROR";
+        log.info("Log level is "+logLevel);
         log.info(config.toString());
         try {
             ClassLoader classLoader = getClassLoader();
@@ -95,15 +97,15 @@ public class LazyDocMojo extends AbstractMojo {
             Method addPrinterConfig = lazyDocConfigClass.getDeclaredMethod("addPrinterConfig", lazyDocPrinterConfigClass);
             Object lazydocConfig = lazyDocConfigClass.newInstance();
             BeanUtils.copyProperties(lazydocConfig, config);
+            List lazyDocPrinterConfigs = new ArrayList();
             if (printerConfigs != null) {
                 for(PrinterConfig printerConfig : printerConfigs) {
                     Object lazydocPrinterConfig = lazyDocPrinterConfigClass.newInstance();
                     BeanUtils.copyProperties(lazydocPrinterConfig, printerConfig);
-                    addPrinterConfig.invoke(lazydocPrinterConfig);
+                    lazyDocPrinterConfigs.add(lazydocPrinterConfig);
                 }
             }
-            Object lazydoc = lazyDocClass.getConstructor(lazyDocConfigClass).newInstance(lazydocConfig);
-            lazyDocClass.getDeclaredMethod("document").invoke(lazydoc);
+            lazyDocClass.getDeclaredMethod("document", lazyDocConfigClass, List.class, String.class).invoke(lazyDocClass.newInstance(), lazydocConfig, lazyDocPrinterConfigs, logLevel);
         } catch (Exception e) {
             getLog().error("Error parsing for documentation.", e);
             throw new MojoFailureException("Error parsing for documentation." + e.getMessage());

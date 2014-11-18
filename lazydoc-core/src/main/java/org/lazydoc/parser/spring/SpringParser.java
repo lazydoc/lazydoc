@@ -67,6 +67,7 @@ public class SpringParser {
         }
         log.debug("Looking up on package "+packageToSearchForControllers);
         Set<Class<?>> controllerSet = new Reflections(packageToSearchForControllers).getTypesAnnotatedWith(Controller.class);
+        controllerSet.addAll(new Reflections(packageToSearchForControllers).getTypesAnnotatedWith(RestController.class));
         log.debug("Found Controllers: "+StringUtils.join(controllerSet, ", "));
         return controllerSet;
     }
@@ -471,7 +472,7 @@ public class SpringParser {
                 return removeEnd(responseDescription.type().getSimpleName(), config.getDataTypeSuffix());
             }
         }
-        if (method.isAnnotationPresent(ResponseBody.class)) {
+        if (method.getDeclaringClass().isAnnotationPresent(RestController.class) || method.isAnnotationPresent(ResponseBody.class)) {
             if (Inspector.isListSetOrArray(method.getReturnType())) {
                 Class<?> genericClass = Inspector.getGenericClassOfList(method.getReturnType(), method.getGenericReturnType());
                 dataTypeParser.addDataType(genericClass);
