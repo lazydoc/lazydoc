@@ -94,7 +94,6 @@ public class LazyDocMojo extends AbstractMojo {
             Class<?> lazyDocClass = classLoader.loadClass("org.lazydoc.LazyDoc");
             Class<?> lazyDocConfigClass = classLoader.loadClass("org.lazydoc.config.Config");
             Class<?> lazyDocPrinterConfigClass = classLoader.loadClass("org.lazydoc.config.PrinterConfig");
-            Method addPrinterConfig = lazyDocConfigClass.getDeclaredMethod("addPrinterConfig", lazyDocPrinterConfigClass);
             Object lazydocConfig = lazyDocConfigClass.newInstance();
             BeanUtils.copyProperties(lazydocConfig, config);
             List lazyDocPrinterConfigs = new ArrayList();

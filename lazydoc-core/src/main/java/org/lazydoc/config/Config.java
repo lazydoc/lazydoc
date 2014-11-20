@@ -10,10 +10,9 @@ public class Config {
 	private String dataTypeSuffix;
 	private String documentationSuffix;
 	private String packageToSearchForControllers;
-	private String exceptionHandlerInvoker;
 	private String baseDTOClassname;
-	private String swaggerBasePath;
-    private String abstractControllerClassForCommonExceptionHandlers;
+	private String exceptionHandlerInvoker;
+	private String abstractControllerClassForCommonExceptionHandlers;
     private String instanceControllerClassForCommonExceptionHandlers;
     private String controllerClassToStopErrorInspection;
 
@@ -58,14 +57,6 @@ public class Config {
 		this.baseDTOClassname = baseDTOClassname;
 	}
 	
-	public String getSwaggerBasePath() {
-		return swaggerBasePath;
-	}
-	
-	public void setSwaggerBasePath(String swaggerBasePath) {
-		this.swaggerBasePath = swaggerBasePath;
-	}
-
     public String getAbstractControllerClassForCommonExceptionHandlers() {
         return abstractControllerClassForCommonExceptionHandlers;
     }
@@ -99,7 +90,6 @@ public class Config {
                 ", packageToSearchForControllers='" + packageToSearchForControllers + '\'' +
                 ", exceptionHandlerInvoker='" + exceptionHandlerInvoker + '\'' +
                 ", baseDTOClassname='" + baseDTOClassname + '\'' +
-                ", swaggerBasePath='" + swaggerBasePath + '\'' +
                 ", abstractControllerClassForCommonExceptionHandlers='" + abstractControllerClassForCommonExceptionHandlers + '\'' +
                 ", instanceControllerClassForCommonExceptionHandlers='" + instanceControllerClassForCommonExceptionHandlers + '\'' +
                 ", controllerClassToStopErrorInspection='" + controllerClassToStopErrorInspection + '\'' +

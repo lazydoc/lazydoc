@@ -67,7 +67,10 @@ public class SpringParser {
         }
         log.debug("Looking up on package "+packageToSearchForControllers);
         Set<Class<?>> controllerSet = new Reflections(packageToSearchForControllers).getTypesAnnotatedWith(Controller.class);
-        controllerSet.addAll(new Reflections(packageToSearchForControllers).getTypesAnnotatedWith(RestController.class));
+        log.info("Spring controllers found : "+controllerSet.size());
+        Set<Class<?>> restcontrollersSet = new Reflections(packageToSearchForControllers).getTypesAnnotatedWith(RestController.class);
+        log.info("Spring restcontrollers found : "+restcontrollersSet.size());
+        controllerSet.addAll(restcontrollersSet);
         log.debug("Found Controllers: "+StringUtils.join(controllerSet, ", "));
         return controllerSet;
     }
@@ -332,7 +335,7 @@ public class SpringParser {
     }
 
     private boolean isControllerAnnotationPresent(Class<?> controller) {
-        return controller.isAnnotationPresent(Controller.class);
+        return controller.isAnnotationPresent(Controller.class) || controller.isAnnotationPresent(RestController.class);
     }
 
     private boolean methodHasRequestMapping(Method method) {
@@ -343,6 +346,7 @@ public class SpringParser {
         OperationDescription operationDescription = getOperationDescription(method);
         DocOperation operation = new DocOperation();
         operation.setHttpMethod(getHttpMethod(method));
+        operation.setResponseStatus(getResponseStatus(method));
         operation.setResponseClass(getResponseClass(method));
         operation.setNickname(method.getName());
         operation.setPath(path);
@@ -413,7 +417,6 @@ public class SpringParser {
             domain.setOrder(description.order());
             domain.setExternalDocumentation(description.externalDocumentation().location());
             domain.setExternalInsertPosition(description.externalDocumentation().postion());
-            domain.setBasePath(config.getSwaggerBasePath());
             domain.getErrorList().addAll(listOfCommonErrors);
             domains.put(description.order(), domain);
             if (StringUtils.isNotBlank(description.subDomain().name())) {
@@ -461,6 +464,14 @@ public class SpringParser {
 
     private String getHttpMethod(Method method) {
         return StringUtils.join(method.getAnnotation(RequestMapping.class).method(), ",");
+    }
+
+    private String getResponseStatus(Method method) {
+        if(method.isAnnotationPresent(ResponseStatus.class)) {
+            ResponseStatus responseStatus = method.getAnnotation(ResponseStatus.class);
+            return responseStatus.value().value()+ " - "+StringUtils.defaultString(responseStatus.reason(), responseStatus.value().getReasonPhrase());
+        }
+        return HttpStatus.OK.value()+" - "+HttpStatus.OK.getReasonPhrase();
     }
 
     private String getResponseClass(Method method) {

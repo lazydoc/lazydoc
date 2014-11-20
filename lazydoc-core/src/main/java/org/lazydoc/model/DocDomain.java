@@ -13,7 +13,6 @@ public class DocDomain {
 	protected String domainShortDescription = "";
 	private String description = "";
 	private int order = 1;
-	private String basePath;
 	private String externalDocumentation;
 	private InsertPosition externalInsertPosition = InsertPosition.TOP;
 	private Set<DocOperation> operations = new TreeSet<DocOperation>();
@@ -26,14 +25,6 @@ public class DocDomain {
 
 	public void setDomain(String name) {
 		this.domain = name;
-	}
-
-	public String getBasePath() {
-		return basePath;
-	}
-
-	public void setBasePath(String basePath) {
-		this.basePath = basePath;
 	}
 
 	public String getDescription() {
