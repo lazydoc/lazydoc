@@ -4,11 +4,11 @@
     <parent>
         <groupId>org.lazydoc</groupId>
         <artifactId>lazydoc</artifactId>
-        <version>1.0.0</version>
+        <version>1.0.1-SNAPSHOT</version>
     </parent>
 
     <artifactId>lazydoc-plugin</artifactId>
-    <version>1.0.0</version>
+    <version>1.0.1-SNAPSHOT</version>
     <packaging>maven-plugin</packaging>
 
     <name>${project.groupId}:${project.artifactId}</name>
@@ -86,7 +86,7 @@
         <dependency>
             <groupId>org.lazydoc</groupId>
             <artifactId>lazydoc-core</artifactId>
-            <version>1.0.0</version>
+            <version>1.0.1-SNAPSHOT</version>
         </dependency>
 
         <dependency>
