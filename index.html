@@ -36,12 +36,55 @@
 <h1>
 <a id="getting-started" class="anchor" href="#getting-started" aria-hidden="true"><span class="octicon octicon-link"></span></a>Getting Started</h1>
 
-<p>To use lazydoc you have to create a small java class which configures and executes lazydoc. The goal is to replace this with a maven plugin, but at the moment there are problems with class loading. As soon as this is solved this section will be updated.</p>
+<p>To use lazydoc you can integrate the lazydoc maven plugin in your maven pom file or you can create a custom java class which configures and executes lazydoc. The different configuration options are described in the configuration section below.</p>
 
 <p>Lazydoc is currently just supporting a parser for Spring REST, but it will also support JAX-RS and other REST frameworks in the future.</p>
 
+<h2>
+<a id="use-the-lazydoc-maven-plugin" class="anchor" href="#use-the-lazydoc-maven-plugin" aria-hidden="true"><span class="octicon octicon-link"></span></a>Use the lazydoc maven plugin</h2>
+
+<p>Lazydoc provides a maven plugin which configures and executes lazydoc. </p>
+
 <h3>
-<a id="lazydoc-configuration-class" class="anchor" href="#lazydoc-configuration-class" aria-hidden="true"><span class="octicon octicon-link"></span></a>Lazydoc configuration class</h3>
+<a id="lazydoc-maven-plugin-example" class="anchor" href="#lazydoc-maven-plugin-example" aria-hidden="true"><span class="octicon octicon-link"></span></a>Lazydoc maven plugin example</h3>
+
+<pre><code>        &lt;plugin&gt;
+            &lt;groupId&gt;org.lazydoc&lt;/groupId&gt;
+            &lt;artifactId&gt;lazydoc-plugin&lt;/artifactId&gt;
+            &lt;version&gt;1.0.0&lt;/version&gt;
+            &lt;executions&gt;
+                &lt;execution&gt;
+                    &lt;goals&gt;
+                        &lt;goal&gt;document&lt;/goal&gt;
+                    &lt;/goals&gt;
+                    &lt;phase&gt;compile&lt;/phase&gt;
+                &lt;/execution&gt;
+            &lt;/executions&gt;
+            &lt;configuration&gt;
+                &lt;config&gt;
+                    &lt;packageToSearchForControllers&gt;org.lazydoc.example&lt;/packageToSearchForControllers&gt;
+                    &lt;documentationSuffix&gt;Documentation&lt;/documentationSuffix&gt;
+                &lt;/config&gt;
+                &lt;printerConfigs&gt;
+                    &lt;printerConfig&gt;
+                        &lt;className&gt;org.lazydoc.printer.DocBookDocumentationPrinter&lt;/className&gt;
+                        &lt;outputPath&gt;${project.parent.basedir}/lazydoc-docbookexample/src/docbkx/lazydoc/&lt;/outputPath&gt;
+                        &lt;params&gt;
+                           &lt;docbook.filename&gt;lazydoc.xml&lt;/docbook.filename&gt;
+                        &lt;/params&gt;
+                    &lt;/printerConfig&gt;
+                &lt;/printerConfigs&gt;
+            &lt;/configuration&gt;
+        &lt;/plugin&gt;
+</code></pre>
+
+<h2>
+<a id="use-a-custom-java-class" class="anchor" href="#use-a-custom-java-class" aria-hidden="true"><span class="octicon octicon-link"></span></a>Use a custom java class</h2>
+
+<p>To use lazydoc you can create a small java class which configures and executes lazydoc. </p>
+
+<h3>
+<a id="lazydoc-configuration-class-example" class="anchor" href="#lazydoc-configuration-class-example" aria-hidden="true"><span class="octicon octicon-link"></span></a>Lazydoc configuration class example</h3>
 
 <pre><code>  public class ExampleDocParser {
 
@@ -78,7 +121,7 @@
 </code></pre>
 
 <h3>
-<a id="documenting-an-controller" class="anchor" href="#documenting-an-controller" aria-hidden="true"><span class="octicon octicon-link"></span></a>Documenting an controller</h3>
+<a id="documenting-a-controller" class="anchor" href="#documenting-a-controller" aria-hidden="true"><span class="octicon octicon-link"></span></a>Documenting a controller</h3>
 
 <p>Lazydoc is using an annotation based approache to add the additional information which is needed to generate the documentation artifacts. The following example shows the usage of the annotations. See detailed description of the annotations below.</p>
 
@@ -125,30 +168,183 @@ public class RestfulCustomerController {
 
 <p>In this example the annotations for documentation are put directly in the controller class. But this litters the class too much. Lazydoc offers the possibility to put the documentation annotations in a different class. Currently there is just a strategy to configure a suffix for the controller class to lookup the documentation class. So for example if your controller is <strong>RestfulCustomerController</strong> and your suffix is <strong>Documentation</strong>, lazydoc will look for a (abstract) class or interface with the name <strong>RestfulCustomerControllerDocumentation</strong> in the same package. The package with the documentation class can be in a different project as long as it is accessible in the compile phase.</p>
 
+<p>The annotation can be included in your project with the following maven dependency</p>
+
+<pre><code>  &lt;dependency&gt;
+       &lt;groupId&gt;org.lazydoc&lt;/groupId&gt;
+       &lt;artifactId&gt;lazydoc-annotation&lt;/artifactId&gt;
+       &lt;version&gt;1.0.0&lt;/version&gt;
+  &lt;/dependency&gt;
+</code></pre>
+
 <h1>
 <a id="configuration" class="anchor" href="#configuration" aria-hidden="true"><span class="octicon octicon-link"></span></a>Configuration</h1>
 
-<p>*** will be updated in the next few days ***</p>
+<p>The configuration of lazydoc is done with a common configuration and a configuration for every printer for what you want to generate documentation for.</p>
+
+<h2>
+<a id="config" class="anchor" href="#config" aria-hidden="true"><span class="octicon octicon-link"></span></a>Config</h2>
 
 <h4>
-<a id="config" class="anchor" href="#config" aria-hidden="true"><span class="octicon octicon-link"></span></a>Config</h4>
+<a id="packagetosearchforcontrollers" class="anchor" href="#packagetosearchforcontrollers" aria-hidden="true"><span class="octicon octicon-link"></span></a>packageToSearchForControllers</h4>
 
-<ul>
-<li>packageToSearchForControllers</li>
-<li>breakOnUndocumented</li>
-<li>documentationSuffix</li>
-<li>dataTypeSuffix</li>
-<li>baseDTOClassname</li>
-<li>customAnnotationToBeIgnored</li>
-<li>exceptionHandlerInvoker</li>
-<li>abstractControllerClassForCommonExceptionHandlers</li>
-<li>instanceControllerClassForCommonExceptionHandlers</li>
-<li>stopInspectionAtAbstractController</li>
-<li>controllerClassToStopErrorInspection</li>
-</ul>
+<p>The package where lazydoc can find the controllers which should be documented.</p>
 
-<h3>
-<a id="printerconfig" class="anchor" href="#printerconfig" aria-hidden="true"><span class="octicon octicon-link"></span></a>PrinterConfig</h3>
+<h4>
+<a id="breakonundocumented" class="anchor" href="#breakonundocumented" aria-hidden="true"><span class="octicon octicon-link"></span></a>breakOnUndocumented</h4>
+
+<p>If this flag is set to true the build process will fail if there are undocumented artifacts.</p>
+
+<h4>
+<a id="documentationsuffix" class="anchor" href="#documentationsuffix" aria-hidden="true"><span class="octicon octicon-link"></span></a>documentationSuffix</h4>
+
+<p>Lazydoc offers to put the documentation annotation in a different class  in the same package. This can be used to avoid loitering the controller class with documentation annotation. If the documentationSuffix is defined lazydoc will look for the documentation annotations in a class or interface with controller name +  documentation suffix. So for example if the controller is named RestfulCustomerController and the documentation suffix is Documentation lazydoc expects to find a class RestfulCustomerControllerDocumentation</p>
+
+<h4>
+<a id="datatypesuffix" class="anchor" href="#datatypesuffix" aria-hidden="true"><span class="octicon octicon-link"></span></a>dataTypeSuffix</h4>
+
+<p>If the controller uses for its data transfer object (DTO) a common suffix like DTO or VO (Value Object) or something else you can tell lazydoc with the dataTypeSuffix to not include the suffix in the documentation. So for example if the DTO class is called CustomerDTO lazydoc will just use the Customer part in the documentation. </p>
+
+<h4>
+<a id="basedtoclassname" class="anchor" href="#basedtoclassname" aria-hidden="true"><span class="octicon octicon-link"></span></a>baseDTOClassname</h4>
+
+<p>If the DTO classes all share a common base DTO class lazydoc can check if all classes found are inherited by this base class. The name of the class is configured with baseDTOClassname. This is useful if DTO classes and entity classes are mixed in the controller and just DTO classes should be used for documentation. The lazydoc annotations support type parameters which specifies the used type instead of using reflection. So for example if a spring resolver resolves a client id to a Client entity you can specify with the type that the client should be a Long or String or so. If the type is not set lazydoc will check that the client type is not inherited from the configured baseDTOClassname and will report an error. If this parameter is not configured (default) everything is parsed.</p>
+
+<h4>
+<a id="customannotationtobeignored" class="anchor" href="#customannotationtobeignored" aria-hidden="true"><span class="octicon octicon-link"></span></a>customAnnotationToBeIgnored</h4>
+
+<p>If there are already custom annotations used in the controllers which can be used to define methods or controllers to be ignored the class name of this annotation can be configured with this parameter.</p>
+
+<p>+++++ The following parameters will be updated in the near future +++++</p>
+
+<h4>
+<a id="exceptionhandlerinvoker" class="anchor" href="#exceptionhandlerinvoker" aria-hidden="true"><span class="octicon octicon-link"></span></a>exceptionHandlerInvoker</h4>
+
+<h4>
+<a id="abstractcontrollerclassforcommonexceptionhandlers" class="anchor" href="#abstractcontrollerclassforcommonexceptionhandlers" aria-hidden="true"><span class="octicon octicon-link"></span></a>abstractControllerClassForCommonExceptionHandlers</h4>
+
+<h4>
+<a id="instancecontrollerclassforcommonexceptionhandlers" class="anchor" href="#instancecontrollerclassforcommonexceptionhandlers" aria-hidden="true"><span class="octicon octicon-link"></span></a>instanceControllerClassForCommonExceptionHandlers</h4>
+
+<h4>
+<a id="controllerclasstostoperrorinspection" class="anchor" href="#controllerclasstostoperrorinspection" aria-hidden="true"><span class="octicon octicon-link"></span></a>controllerClassToStopErrorInspection</h4>
+
+<h2>
+<a id="printerconfig" class="anchor" href="#printerconfig" aria-hidden="true"><span class="octicon octicon-link"></span></a>PrinterConfig</h2>
+
+<h4>
+<a id="classname" class="anchor" href="#classname" aria-hidden="true"><span class="octicon octicon-link"></span></a>className</h4>
+
+<p>The classname of the printer which should be used.</p>
+
+<h4>
+<a id="outputpath" class="anchor" href="#outputpath" aria-hidden="true"><span class="octicon octicon-link"></span></a>outputPath</h4>
+
+<p>The output path where the printer should generate the documentation artifacts.</p>
+
+<h4>
+<a id="params" class="anchor" href="#params" aria-hidden="true"><span class="octicon octicon-link"></span></a>params</h4>
+
+<p>The params for the printer are provided as a map if needed.</p>
+
+<h1>
+<a id="annotations" class="anchor" href="#annotations" aria-hidden="true"><span class="octicon octicon-link"></span></a>Annotations</h1>
+
+<h2>
+<a id="domaindescription" class="anchor" href="#domaindescription" aria-hidden="true"><span class="octicon octicon-link"></span></a>DomainDescription</h2>
+
+<h4>
+<a id="name" class="anchor" href="#name" aria-hidden="true"><span class="octicon octicon-link"></span></a>name</h4>
+
+<p>The name of the domain. </p>
+
+<h4>
+<a id="shortdescription" class="anchor" href="#shortdescription" aria-hidden="true"><span class="octicon octicon-link"></span></a>shortDescription</h4>
+
+<p>The short description can be used in printers to describe in a short way what the domain is about. If the short description is not set the description will be used.</p>
+
+<h4>
+<a id="description" class="anchor" href="#description" aria-hidden="true"><span class="octicon octicon-link"></span></a>description</h4>
+
+<p>The description of the domain provides a more detailed content what the domain is about.</p>
+
+<h4>
+<a id="order" class="anchor" href="#order" aria-hidden="true"><span class="octicon octicon-link"></span></a>order</h4>
+
+<p>The order of the domain can be used to define the order of the different domains. If you have more than one domain you have to provide the order of the domains. So for example 1 Customer 2 Products etc.</p>
+
+<h4>
+<a id="subdomain" class="anchor" href="#subdomain" aria-hidden="true"><span class="octicon octicon-link"></span></a>subDomain</h4>
+
+<p>If the domain is too big so that it is useful to divide it in subcategories you can define subdomains.</p>
+
+<h4>
+<a id="externaldocumentation" class="anchor" href="#externaldocumentation" aria-hidden="true"><span class="octicon octicon-link"></span></a>externalDocumentation</h4>
+
+<p>If there are some additional informations to your domain which are not part of the documentation of your operations you can specify an external documentation which can be interpreted by the documentation printer and can be included   in the generated documentation artifacts.</p>
+
+<h2>
+<a id="subdomaindescription" class="anchor" href="#subdomaindescription" aria-hidden="true"><span class="octicon octicon-link"></span></a>SubDomainDescription</h2>
+
+<h4>
+<a id="name-1" class="anchor" href="#name-1" aria-hidden="true"><span class="octicon octicon-link"></span></a>name</h4>
+
+<p>The name of the sub domain. </p>
+
+<h4>
+<a id="shortdescription-1" class="anchor" href="#shortdescription-1" aria-hidden="true"><span class="octicon octicon-link"></span></a>shortDescription</h4>
+
+<p>The short description can be used in printers to describe in a short way what the sub domain is about. If the short description is not set the description will be used.</p>
+
+<h4>
+<a id="description-1" class="anchor" href="#description-1" aria-hidden="true"><span class="octicon octicon-link"></span></a>description</h4>
+
+<p>The description of the domain provides a more detailed content what the sub domain is about.</p>
+
+<h4>
+<a id="order-1" class="anchor" href="#order-1" aria-hidden="true"><span class="octicon octicon-link"></span></a>order</h4>
+
+<p>The order of the sub domain can be used to define the order of the different sub domains. If you have more than one sub domain you have to provide the order of the sub domains. So for example domain Customer subdomains 1 master data management 2 registrations 3 contact address etc.</p>
+
+<h4>
+<a id="externaldocumentation-1" class="anchor" href="#externaldocumentation-1" aria-hidden="true"><span class="octicon octicon-link"></span></a>externalDocumentation</h4>
+
+<p>If there are some additional informations to your sub domain which are not part of the documentation of your operations you can specify an external documentation which can be interpreted by the documentation printer and can be included in the generated documentation artifacts.</p>
+
+<h2>
+<a id="operationdescription" class="anchor" href="#operationdescription" aria-hidden="true"><span class="octicon octicon-link"></span></a>OperationDescription</h2>
+
+<h4>
+<a id="order-2" class="anchor" href="#order-2" aria-hidden="true"><span class="octicon octicon-link"></span></a>order</h4>
+
+<p>The order of the operations in your controller class. If not set the operations are sorted alphabetically</p>
+
+<h4>
+<a id="description-2" class="anchor" href="#description-2" aria-hidden="true"><span class="octicon octicon-link"></span></a>description</h4>
+
+<p>The description what the operation is doing</p>
+
+<h4>
+<a id="shortdescription-2" class="anchor" href="#shortdescription-2" aria-hidden="true"><span class="octicon octicon-link"></span></a>shortDescription</h4>
+
+<p>The short description what the operation is doing. If the short description is not set the description will be used.</p>
+
+<h4>
+<a id="nickname" class="anchor" href="#nickname" aria-hidden="true"><span class="octicon octicon-link"></span></a>nickname</h4>
+
+<p>The nickname is the name of the method in the controller class. The nickname is for example used by swagger for expanding the details of an operation. If two operations have the same name because they are overloaded swagger can would expand both operation details. So with this parameter you can specify an alternative nick name</p>
+
+<h4>
+<a id="notes" class="anchor" href="#notes" aria-hidden="true"><span class="octicon octicon-link"></span></a>notes</h4>
+
+<p>A more detailed description of the operation.</p>
+
+<h4>
+<a id="externaldocumentation-2" class="anchor" href="#externaldocumentation-2" aria-hidden="true"><span class="octicon octicon-link"></span></a>externalDocumentation</h4>
+
+<p>If there are some additional informations to your operation you can specify an external documentation which can be interpreted by the documentation printer and can be included in the generated documentation artifacts. For example tables which explain some things in a more detailed way. Things which can not be put easily in a common description.</p>
+
+<p>++++++ Will be updated soon ++++++++</p>
       </section>
     </div>
 
