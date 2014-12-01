@@ -344,6 +344,91 @@ public class RestfulCustomerController {
 
 <p>If there are some additional informations to your operation you can specify an external documentation which can be interpreted by the documentation printer and can be included in the generated documentation artifacts. For example tables which explain some things in a more detailed way. Things which can not be put easily in a common description.</p>
 
+<h2>
+<a id="externaldocumentation-3" class="anchor" href="#externaldocumentation-3" aria-hidden="true"><span class="octicon octicon-link"></span></a>ExternalDocumentation</h2>
+
+<h4>
+<a id="location" class="anchor" href="#location" aria-hidden="true"><span class="octicon octicon-link"></span></a>location</h4>
+
+<p>The location where the external location can be found. Should be a relative location and can be interpreted by the printers differently</p>
+
+<h4>
+<a id="postion" class="anchor" href="#postion" aria-hidden="true"><span class="octicon octicon-link"></span></a>postion</h4>
+
+<p>The position where the external documentation should be inserted. It can be inserted before or after the domain / subdomain / operation descriptions. The position is an enum of type InsertPosition which can have the values TOP or BOTTOM.</p>
+
+<h2>
+<a id="parameterdescription" class="anchor" href="#parameterdescription" aria-hidden="true"><span class="octicon octicon-link"></span></a>ParameterDescription</h2>
+
+<h4>
+<a id="value" class="anchor" href="#value" aria-hidden="true"><span class="octicon octicon-link"></span></a>value</h4>
+
+<p>The List of parameter annotations.</p>
+
+<h2>
+<a id="parameter" class="anchor" href="#parameter" aria-hidden="true"><span class="octicon octicon-link"></span></a>Parameter</h2>
+
+<h4>
+<a id="name-2" class="anchor" href="#name-2" aria-hidden="true"><span class="octicon octicon-link"></span></a>name</h4>
+
+<p>The name of the parameter to be described. If the parameter is a path variable lazydoc expects the name of path variable in the URI. If the parameter is for an request body lazydoc expects the name of the parameter to be <strong>requestBody</strong>. If the parameter is a query parameter the name of the parameter has to be defined in the RequestParam annotation. These conventions are necessary because until Java 8 it is not possible to get the name of a variable in a method signature through reflection. Lazydoc is currently implemented for Java 7.</p>
+
+<h4>
+<a id="type" class="anchor" href="#type" aria-hidden="true"><span class="octicon octicon-link"></span></a>type</h4>
+
+<p>The type of the parameter. Normally this is discovered through reflection and you don't need to specify a type. But sometimes it is useful to specify a class instead of relying on reflection. For example when an ID is already resolved to a complex type, but it should be just String or Long etc.</p>
+
+<h4>
+<a id="description-3" class="anchor" href="#description-3" aria-hidden="true"><span class="octicon octicon-link"></span></a>description</h4>
+
+<p>The description of the parameter.</p>
+
+<h4>
+<a id="ignore" class="anchor" href="#ignore" aria-hidden="true"><span class="octicon octicon-link"></span></a>ignore</h4>
+
+<p>Flag if the parameter should be ignored for documentation.</p>
+
+<h2>
+<a id="propertydescription" class="anchor" href="#propertydescription" aria-hidden="true"><span class="octicon octicon-link"></span></a>PropertyDescription</h2>
+
+<h4>
+<a id="description-4" class="anchor" href="#description-4" aria-hidden="true"><span class="octicon octicon-link"></span></a>description</h4>
+
+<p>The description of the property of the data type.</p>
+
+<h4>
+<a id="addpossibleenumvalues" class="anchor" href="#addpossibleenumvalues" aria-hidden="true"><span class="octicon octicon-link"></span></a>addPossibleEnumValues</h4>
+
+<p>If the data type property is an enum this flag determines if the enum values will automatically added to the description of the property. The default for this value is true, so by default all enum values are listed in the description.</p>
+
+<h4>
+<a id="type-1" class="anchor" href="#type-1" aria-hidden="true"><span class="octicon octicon-link"></span></a>type</h4>
+
+<p>The type of the property. Normally this is discovered through reflection and you don't need to specify a type. But sometimes it is useful to specify a class instead of relying on reflection. For example when an ID is already resolved to a complex type, but it should be just String or Long etc.</p>
+
+<h4>
+<a id="required" class="anchor" href="#required" aria-hidden="true"><span class="octicon octicon-link"></span></a>required</h4>
+
+<p>Flag if the property is required or optional. Default is false.</p>
+
+<h4>
+<a id="onlyrequest" class="anchor" href="#onlyrequest" aria-hidden="true"><span class="octicon octicon-link"></span></a>onlyRequest</h4>
+
+<p>Flag if the property only appears in the request. Default is false. If both values for onlyRequest and onlyResponse are false (for example if you didn't set this flags in the annotation) the property will be considered for the request.</p>
+
+<h4>
+<a id="onlyresponse" class="anchor" href="#onlyresponse" aria-hidden="true"><span class="octicon octicon-link"></span></a>onlyResponse</h4>
+
+<p>Flag if the property only appears in the response. Default is false. If both values for onlyRequest and onlyResponse are false (for example if you didn't set this flags in the annotation) the property will be considered for the response.</p>
+
+<h2>
+<a id="sample" class="anchor" href="#sample" aria-hidden="true"><span class="octicon octicon-link"></span></a>Sample</h2>
+
+<h4>
+<a id="value-1" class="anchor" href="#value-1" aria-hidden="true"><span class="octicon octicon-link"></span></a>value</h4>
+
+<p>A sample can be specified to give the printer the opportunity to build a JSON example with the sample values of the data type properties. The value is a array of string, so it can contain just a simple string or if you need samples for a list you can specify more values as a string array.</p>
+
 <p>++++++ Will be updated soon ++++++++</p>
       </section>
     </div>
