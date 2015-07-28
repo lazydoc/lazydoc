@@ -13,6 +13,8 @@ import java.util.TreeMap;
 import javax.validation.constraints.NotNull;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.lazydoc.annotation.IgnoreForDocumentation;
 import org.lazydoc.annotation.PropertyDescription;
 import org.lazydoc.annotation.Sample;
@@ -23,6 +25,8 @@ import org.lazydoc.reporter.DocumentationReporter;
 import org.lazydoc.util.Inspector;
 
 public class DataTypeParser {
+
+	private static final Logger log = LogManager.getLogger(DataTypeParser.class);
 	
 	private Map<String, DocDataType> dataTypes = new TreeMap<>();
 	
@@ -36,7 +40,7 @@ public class DataTypeParser {
 	        try {
 	            this.configuredBaseDTOClass = Class.forName(configuredBaseDTOClass);
 	        } catch (ClassNotFoundException e) {
-	            System.out.println("Could not find configured base DTO class "+configuredBaseDTOClass);
+	            log.debug("Could not find configured base DTO class "+configuredBaseDTOClass);
 	        }
 		}
     }
@@ -63,7 +67,7 @@ public class DataTypeParser {
 			return;
 		}
 
-		System.out.println("Inspecting data type " + clazz.getName());
+		log.debug("Inspecting data type " + clazz.getName());
 		if (!isClassInstanceOfBaseVO(clazz) && isNotJavaType(clazz)) {
 			throw new RuntimeException("Class " + clazz.getSimpleName() + " is not an inherited class of BaseVO");
 		}
@@ -219,10 +223,10 @@ public class DataTypeParser {
 				}
 			}
 		} catch (Exception e) {
-			System.out.println(e.getMessage());
+			log.debug(e.getMessage());
 		}
 		if (!descriptor.getName().equals("class")) {
-			System.out.println("ERROR: Could not find field for descriptor " + descriptor.getName() + " in class " + clazz.getSimpleName());
+			log.debug("ERROR: Could not find field for descriptor " + descriptor.getName() + " in class " + clazz.getSimpleName());
 		}
 		return null;
 	}

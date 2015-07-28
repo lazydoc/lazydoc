@@ -12,6 +12,7 @@ public class DocOperation implements Comparable<DocOperation> {
 	private String path = "";
 	private String pathDescription = "";
 	private String httpMethod = "";
+	private String responseStatus = "";
 	private String nickname = "";
 	private String responseClass = "";
 	private String shortDescription = "";
@@ -62,6 +63,14 @@ public class DocOperation implements Comparable<DocOperation> {
 
 	public void setHttpMethod(String httpMethod) {
 		this.httpMethod = httpMethod;
+	}
+
+	public String getResponseStatus() {
+		return responseStatus;
+	}
+
+	public void setResponseStatus(String responseStatus) {
+		this.responseStatus = responseStatus;
 	}
 
 	public String getNickname() {

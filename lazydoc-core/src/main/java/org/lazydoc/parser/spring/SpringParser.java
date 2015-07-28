@@ -1,6 +1,8 @@
 package org.lazydoc.parser.spring;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.lazydoc.annotation.*;
 import org.lazydoc.config.Config;
 import org.lazydoc.model.*;
@@ -27,6 +29,8 @@ import java.util.regex.Pattern;
 import static org.apache.commons.lang3.StringUtils.removeEnd;
 
 public class SpringParser {
+    
+    private static final Logger log = LogManager.getLogger(SpringParser.class);
 
     private DocumentationReporter reporter;
     private DataTypeParser dataTypeParser;
@@ -61,14 +65,18 @@ public class SpringParser {
         if(StringUtils.isBlank(packageToSearchForControllers)) {
             throw new RuntimeException("Please provide package to search for controllers in configuration");
         }
-        System.out.println("Looking up on package "+packageToSearchForControllers);
+        log.debug("Looking up on package "+packageToSearchForControllers);
         Set<Class<?>> controllerSet = new Reflections(packageToSearchForControllers).getTypesAnnotatedWith(Controller.class);
-        System.out.println("Found Controllers: "+StringUtils.join(controllerSet, ", "));
+        log.info("Spring controllers found : "+controllerSet.size());
+        Set<Class<?>> restcontrollersSet = new Reflections(packageToSearchForControllers).getTypesAnnotatedWith(RestController.class);
+        log.info("Spring restcontrollers found : "+restcontrollersSet.size());
+        controllerSet.addAll(restcontrollersSet);
+        log.debug("Found Controllers: "+StringUtils.join(controllerSet, ", "));
         return controllerSet;
     }
 
     private void extractControllerDetails(SortedSet<String> requestMappings, Class<?> controller) {
-        System.out.println("Inspecting controller " + controller.getSimpleName());
+        log.debug("Inspecting controller " + controller.getSimpleName());
         Class<?> documentation = getDocumentation(controller);
         if (excludeFromDocumentation(controller) || hasNoDocumentation(documentation, controller)) {
             return;
@@ -91,7 +99,7 @@ public class SpringParser {
                         reporter.addDocumentedMethod(controller, method.toString());
                     }
                 } catch (UndocumentedMethodException ex) {
-                    System.out.println("UNDOCUMENTED METHOD: "+ex.getMessage());
+                    log.debug("UNDOCUMENTED METHOD: "+ex.getMessage());
                     reporter.addUndocumentedMethod(controller, method.toString());
                 }
 
@@ -120,12 +128,12 @@ public class SpringParser {
         if (controller.equals(Object.class) || (stopAtAbstractController != null && controller.equals(stopAtAbstractController))) {
             return result;
         } else {
-            System.out.println("Inspecting error handler in controller class " + controller.getSimpleName());
+            log.debug("Inspecting error handler in controller class " + controller.getSimpleName());
             getListOfPossibleErrors(controller.getSuperclass(), stopAtAbstractController, controllerInstance, result);
         }
         for (Method method : controller.getDeclaredMethods()) {
             if (method.isAnnotationPresent(ExceptionHandler.class)) {
-                System.out.println("Inspecting exception handler " + method.getName());
+                log.debug("Inspecting exception handler " + method.getName());
                 HttpStatus httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
                 ExceptionHandler exceptionHandler = method.getAnnotation(ExceptionHandler.class);
                 if (method.isAnnotationPresent(ResponseStatus.class)) {
@@ -191,7 +199,7 @@ public class SpringParser {
             try {
                 return getClassByName(controller.getName() + config.getDocumentationSuffix());
             } catch (RuntimeException ex) {
-                System.out.println("Could not find controller documentation in class "+controller.getName() + config.getDocumentationSuffix());
+                log.debug("Could not find controller documentation in class "+controller.getName() + config.getDocumentationSuffix());
                 return null;
             }
         } else {
@@ -234,13 +242,13 @@ public class SpringParser {
 
     private boolean ignoreMethodForDocumentation(String generalRequestMapping, Method method) {
         if (ignoreMethodForDocumentationWithCustomAnnotation(method, config.getCustomAnnotationToBeIgnored())) {
-            System.out.println("Ignoring method " + method.getName() + " (" + method.toString() + ") for documentation because of custom annotation " + config.getCustomAnnotationToBeIgnored());
+            log.debug("Ignoring method " + method.getName() + " (" + method.toString() + ") for documentation because of custom annotation " + config.getCustomAnnotationToBeIgnored());
             printMethodPathAndHttpMethod(generalRequestMapping, method);
             return true;
         }
         if (ignoreForDocumentation(method)) {
             if (methodHasRequestMapping(method)) {
-                System.err.println("Ignoring method " + method.getName() + " (" + method.toString() + ") for documentation");
+                log.warn("Ignoring method " + method.getName() + " (" + method.toString() + ") for documentation");
                 printMethodPathAndHttpMethod(generalRequestMapping, method);
                 return true;
             }
@@ -250,7 +258,7 @@ public class SpringParser {
 
     private void printMethodPathAndHttpMethod(String generalRequestMapping, Method method) {
         if (methodHasRequestMapping(method)) {
-            System.out.println("Ignoring path " + getRequestMapping(generalRequestMapping, method) + " - " + getHttpMethod(method));
+            log.debug("Ignoring path " + getRequestMapping(generalRequestMapping, method) + " - " + getHttpMethod(method));
         }
     }
 
@@ -327,7 +335,7 @@ public class SpringParser {
     }
 
     private boolean isControllerAnnotationPresent(Class<?> controller) {
-        return controller.isAnnotationPresent(Controller.class);
+        return controller.isAnnotationPresent(Controller.class) || controller.isAnnotationPresent(RestController.class);
     }
 
     private boolean methodHasRequestMapping(Method method) {
@@ -338,6 +346,7 @@ public class SpringParser {
         OperationDescription operationDescription = getOperationDescription(method);
         DocOperation operation = new DocOperation();
         operation.setHttpMethod(getHttpMethod(method));
+        operation.setResponseStatus(getResponseStatus(method));
         operation.setResponseClass(getResponseClass(method));
         operation.setNickname(method.getName());
         operation.setPath(path);
@@ -408,7 +417,6 @@ public class SpringParser {
             domain.setOrder(description.order());
             domain.setExternalDocumentation(description.externalDocumentation().location());
             domain.setExternalInsertPosition(description.externalDocumentation().postion());
-            domain.setBasePath(config.getSwaggerBasePath());
             domain.getErrorList().addAll(listOfCommonErrors);
             domains.put(description.order(), domain);
             if (StringUtils.isNotBlank(description.subDomain().name())) {
@@ -458,6 +466,14 @@ public class SpringParser {
         return StringUtils.join(method.getAnnotation(RequestMapping.class).method(), ",");
     }
 
+    private String getResponseStatus(Method method) {
+        if(method.isAnnotationPresent(ResponseStatus.class)) {
+            ResponseStatus responseStatus = method.getAnnotation(ResponseStatus.class);
+            return responseStatus.value().value()+ " - "+StringUtils.defaultString(responseStatus.reason(), responseStatus.value().getReasonPhrase());
+        }
+        return HttpStatus.OK.value()+" - "+HttpStatus.OK.getReasonPhrase();
+    }
+
     private String getResponseClass(Method method) {
         Method documentedMethod = getMethodFromDocumentation(method);
         if (documentedMethod.isAnnotationPresent(ResponseDescription.class)) {
@@ -467,7 +483,7 @@ public class SpringParser {
                 return removeEnd(responseDescription.type().getSimpleName(), config.getDataTypeSuffix());
             }
         }
-        if (method.isAnnotationPresent(ResponseBody.class)) {
+        if (method.getDeclaringClass().isAnnotationPresent(RestController.class) || method.isAnnotationPresent(ResponseBody.class)) {
             if (Inspector.isListSetOrArray(method.getReturnType())) {
                 Class<?> genericClass = Inspector.getGenericClassOfList(method.getReturnType(), method.getGenericReturnType());
                 dataTypeParser.addDataType(genericClass);
@@ -483,7 +499,7 @@ public class SpringParser {
     }
 
     private List<DocParameter> getParametersOfMethod(Method method, String apiPath) {
-        System.out.println("Inspecting method " + method.getName() + " with path " + apiPath);
+        log.debug("Inspecting method " + method.getName() + " with path " + apiPath);
         Pattern p = Pattern.compile("\\{.+?\\}");
         Matcher pathMatcher = p.matcher(apiPath);
         List<DocParameter> parameters = new ArrayList<>();
@@ -509,7 +525,7 @@ public class SpringParser {
                         dataTypeParser.addDataType(docParameter.getDataTypeClass());
                     }
                 } else {
-                    System.out.println("Ignoring parameter " + docParameter.getReferenceName() + " - " + docParameter.getParamType());
+                    log.debug("Ignoring parameter " + docParameter.getReferenceName() + " - " + docParameter.getParamType());
                 }
             }
         }
@@ -533,7 +549,7 @@ public class SpringParser {
             docParameter.setName(name);
             docParameter.setReferenceName(name);
         } else {
-            System.out.println("Could not find name");
+            log.debug("Could not find name");
         }
         Parameter parameter = getParameter(parameterDescription, docParameter.getReferenceName());
         docParameter.setDataTypeClass(getDataTypeClass(parameter, parameterType));

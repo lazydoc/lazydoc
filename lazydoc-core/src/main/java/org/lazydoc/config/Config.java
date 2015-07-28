@@ -4,20 +4,17 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Config {
-	
+
+    private boolean breakOnUndocumented = false;
 	private String customAnnotationToBeIgnored;
 	private String dataTypeSuffix;
 	private String documentationSuffix;
 	private String packageToSearchForControllers;
-	private String exceptionHandlerInvoker;
 	private String baseDTOClassname;
-	private String swaggerBasePath;
-    private String abstractControllerClassForCommonExceptionHandlers;
-    private String stopInspectionAtAbstractController;
+	private String exceptionHandlerInvoker;
+	private String abstractControllerClassForCommonExceptionHandlers;
     private String instanceControllerClassForCommonExceptionHandlers;
     private String controllerClassToStopErrorInspection;
-    private List<PrinterConfig> printerConfigs = new ArrayList<>();
-    private boolean breakOnUndocumented = false;
 
     public String getCustomAnnotationToBeIgnored() {
 		return customAnnotationToBeIgnored;
@@ -60,14 +57,6 @@ public class Config {
 		this.baseDTOClassname = baseDTOClassname;
 	}
 	
-	public String getSwaggerBasePath() {
-		return swaggerBasePath;
-	}
-	
-	public void setSwaggerBasePath(String swaggerBasePath) {
-		this.swaggerBasePath = swaggerBasePath;
-	}
-
     public String getAbstractControllerClassForCommonExceptionHandlers() {
         return abstractControllerClassForCommonExceptionHandlers;
     }
@@ -75,23 +64,6 @@ public class Config {
     public void setAbstractControllerClassForCommonExceptionHandlers(String abstractControllerClassForCommonExceptionHandlers) {
         this.abstractControllerClassForCommonExceptionHandlers = abstractControllerClassForCommonExceptionHandlers;
     }
-
-    public String getStopInspectionAtAbstractController() {
-        return stopInspectionAtAbstractController;
-    }
-
-    public void setStopInspectionAtAbstractController(String stopInspectionAtAbstractController) {
-        this.stopInspectionAtAbstractController = stopInspectionAtAbstractController;
-    }
-
-    public List<PrinterConfig> getPrinterConfigs() {
-        return printerConfigs;
-    }
-
-    public void setPrinterConfigs(List<PrinterConfig> printerConfigs) {
-        this.printerConfigs = printerConfigs;
-    }
-
 
     public String getInstanceControllerClassForCommonExceptionHandlers() {
         return instanceControllerClassForCommonExceptionHandlers;
@@ -118,12 +90,9 @@ public class Config {
                 ", packageToSearchForControllers='" + packageToSearchForControllers + '\'' +
                 ", exceptionHandlerInvoker='" + exceptionHandlerInvoker + '\'' +
                 ", baseDTOClassname='" + baseDTOClassname + '\'' +
-                ", swaggerBasePath='" + swaggerBasePath + '\'' +
                 ", abstractControllerClassForCommonExceptionHandlers='" + abstractControllerClassForCommonExceptionHandlers + '\'' +
-                ", stopInspectionAtAbstractController='" + stopInspectionAtAbstractController + '\'' +
                 ", instanceControllerClassForCommonExceptionHandlers='" + instanceControllerClassForCommonExceptionHandlers + '\'' +
                 ", controllerClassToStopErrorInspection='" + controllerClassToStopErrorInspection + '\'' +
-                ", printerConfigs=" + printerConfigs +
                 '}';
     }
 

@@ -1,12 +1,17 @@
 package org.lazydoc.reporter;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.text.DecimalFormat;
 import java.util.HashMap;
 import java.util.Map;
 
 public class DocumentationReporter {
+
+    private static final Logger log = LogManager.getLogger(DocumentationReporter.class);
+
 
     private Map<Class<?>, ControllerDocumentationProgress> controllersProgress = new HashMap<>();
     private Map<Class<?>, ModelDocumentationProgress> modelsProgress = new HashMap<>();
@@ -125,137 +130,138 @@ public class DocumentationReporter {
         Double ignored = (double) (ignoredMethods + ignoredErrorHandlers + ignoredFields);
         double documentationCoverage = documented * 100.0 / (documented + undocumented + ignored);
         double documentationCoverageWithoutIgnored = documented * 100.0 / (documented + undocumented);
-        System.out.println("-----------------------------------------------------------------------------------------------------------");
-        System.out.println("");
-        System.out.println(" DOCUMENTATION SUMMARY REPORT");
-        System.out.println("");
-        System.out.println("-----------------------------------------------------------------------------------------------------------");
-        System.out.println("Overall controllers: " + controllers);
-        System.out.println("Undocumented controllers: " + undocumentedControllers);
-        System.out.println("Ignored controllers: " + ignoredControllers);
-        System.out.println("Documented methods: " + documentedMethods);
-        System.out.println("Documented error handlers: " + documentedErrorHandlers);
-        System.out.println("Undocumented methods: " + undocumentedMethods);
-        System.out.println("Undocumented error handlers: " + undocumentedErrorHandlers);
-        System.out.println("Ignored methods: " + ignoredMethods);
-        System.out.println("Ignored error handlers: " + ignoredErrorHandlers);
-        System.out.println("Models: " + models);
-        System.out.println("Documented fields: " + documentedFields);
-        System.out.println("Undocumented fields: " + undocumentedFields);
-        System.out.println("Ignored fields: " + ignoredFields);
-        System.out.println("-----------------------------------------------------------------------------------------------------------");
-        System.out.println("Documentation coverage: " + (Double.isNaN(documentationCoverage) ? "0.00" : new DecimalFormat("0.00").format(documentationCoverage)) + "%");
-        System.out.println("Documentation coverage without ignored: " + (Double.isNaN(documentationCoverageWithoutIgnored) ? "0.00" : ""+ new DecimalFormat("0.00").format(documentationCoverageWithoutIgnored)) + "%");
-        System.out.println("-----------------------------------------------------------------------------------------------------------");
+        log.info("-----------------------------------------------------------------------------------------------------------");
+        log.info("");
+        log.info(" DOCUMENTATION SUMMARY REPORT");
+        log.info("");
+        log.info("-----------------------------------------------------------------------------------------------------------");
+        log.info("Overall controllers: " + controllers);
+        log.info("Documented controllers: " + (controllers-undocumentedControllers-ignoredControllers));
+        log.info("Undocumented controllers: " + undocumentedControllers);
+        log.info("Ignored controllers: " + ignoredControllers);
+        log.info("Documented methods: " + documentedMethods);
+        log.info("Documented error handlers: " + documentedErrorHandlers);
+        log.info("Undocumented methods: " + undocumentedMethods);
+        log.info("Undocumented error handlers: " + undocumentedErrorHandlers);
+        log.info("Ignored methods: " + ignoredMethods);
+        log.info("Ignored error handlers: " + ignoredErrorHandlers);
+        log.info("Models: " + models);
+        log.info("Documented fields: " + documentedFields);
+        log.info("Undocumented fields: " + undocumentedFields);
+        log.info("Ignored fields: " + ignoredFields);
+        log.info("-----------------------------------------------------------------------------------------------------------");
+        log.info("Documentation coverage: " + (Double.isNaN(documentationCoverage) ? "0.00" : new DecimalFormat("0.00").format(documentationCoverage)) + "%");
+        log.info("Documentation coverage without ignored: " + (Double.isNaN(documentationCoverageWithoutIgnored) ? "0.00" : ""+ new DecimalFormat("0.00").format(documentationCoverageWithoutIgnored)) + "%");
+        log.info("-----------------------------------------------------------------------------------------------------------");
 
     }
 
     public void printProgressReport() {
-        System.out.println("-----------------------------------------------------------------------------------------------------------");
-        System.out.println("");
-        System.out.println(" DOCUMENTATION PROGRESS REPORT");
-        System.out.println("");
-        System.out.println("-----------------------------------------------------------------------------------------------------------");
-        System.out.println("#############################");
-        System.out.println(" Undocumented Controllers:");
-        System.out.println("#############################");
+        log.info("-----------------------------------------------------------------------------------------------------------");
+        log.info("");
+        log.info(" DOCUMENTATION PROGRESS REPORT");
+        log.info("");
+        log.info("-----------------------------------------------------------------------------------------------------------");
+        log.info("#############################");
+        log.info(" Undocumented Controllers:");
+        log.info("#############################");
         for (ControllerDocumentationProgress controllerDocumentationProgress : controllersProgress.values()) {
             if (controllerDocumentationProgress.isUndocumented()) {
                 printMethodsOfController(controllerDocumentationProgress);
             }
         }
-        System.out.println("#############################");
-        System.out.println(" Ignored Controllers:");
-        System.out.println("#############################");
+        log.info("#############################");
+        log.info(" Ignored Controllers:");
+        log.info("#############################");
         for (ControllerDocumentationProgress controllerDocumentationProgress : controllersProgress.values()) {
             if (controllerDocumentationProgress.isIgnored()) {
-                System.out.println("Reason to ignore controller: " + controllerDocumentationProgress.getIgnoreReason());
+                log.info("Reason to ignore controller: " + controllerDocumentationProgress.getIgnoreReason());
                 printMethodsOfController(controllerDocumentationProgress);
             }
         }
-        System.out.println("#############################");
-        System.out.println(" Documented Controllers:");
-        System.out.println("#############################");
+        log.info("#############################");
+        log.info(" Documented Controllers:");
+        log.info("#############################");
         for (ControllerDocumentationProgress controllerDocumentationProgress : controllersProgress.values()) {
             if (!controllerDocumentationProgress.isIgnored() && !controllerDocumentationProgress.isUndocumented()) {
                 printMethodsOfController(controllerDocumentationProgress);
 
             }
         }
-        System.out.println("-----------------------------------------------------------------------------------------------------------");
+        log.info("-----------------------------------------------------------------------------------------------------------");
         for (ModelDocumentationProgress modelDocumentationProgress : modelsProgress.values()) {
-            System.out.println("Model " + modelDocumentationProgress.getModelClass().getSimpleName()+"\n");
+            log.info("Model " + modelDocumentationProgress.getModelClass().getSimpleName());
             if (modelDocumentationProgress.getDocumentedFields().size() > 0) {
-                System.out.println("**** Documented fields ****");
+                log.info("**** Documented fields ****");
                 for (String field : modelDocumentationProgress.getDocumentedFields()) {
-                    System.out.println(field);
+                    log.info(field);
                 }
             }
             if (modelDocumentationProgress.getIgnoredFields().size() > 0) {
-                System.out.println("**** Ignored fields ****");
+                log.info("**** Ignored fields ****");
                 for (String field : modelDocumentationProgress.getIgnoredFields()) {
-                    System.out.println(field);
+                    log.info(field);
                 }
             }
             if (modelDocumentationProgress.getUndocumentedFields().size() > 0) {
-                System.out.println("**** Undocumented fields ****");
+                log.info("**** Undocumented fields ****");
                 for (String field : modelDocumentationProgress.getUndocumentedFields()) {
-                    System.out.println(field);
+                    log.info(field);
                 }
             }
-            System.out.println("- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -");
+            log.info("- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -");
         }
     }
 
     private void printMethodsOfController(ControllerDocumentationProgress controllerDocumentationProgress) {
-        System.out.println("Controller " + controllerDocumentationProgress.getController().getSimpleName()+"\n");
+        log.info("Controller " + controllerDocumentationProgress.getController().getSimpleName());
         if (controllerDocumentationProgress.getUndocumentedMethods().size() > 0) {
-            System.out.println("**** Undocumented methods ****");
+            log.info("**** Undocumented methods ****");
             for (String method : controllerDocumentationProgress.getUndocumentedMethods()) {
-                System.out.println(method);
+                log.info(method);
             }
         }
         if (controllerDocumentationProgress.getIgnoredMethods().size() > 0) {
-            System.out.println("**** Ignored methods ****");
+            log.info("**** Ignored methods ****");
             for (String method : controllerDocumentationProgress.getIgnoredMethods()) {
-                System.out.println(method);
+                log.info(method);
             }
         }
         if (controllerDocumentationProgress.getIgnoredMethods().size() > 0) {
-            System.out.println("**** Undocumented Errorhandlers ****");
+            log.info("**** Undocumented Errorhandlers ****");
             for (String errorHandler : controllerDocumentationProgress.getUndocumentedErrorHandlers()) {
-                System.out.println(errorHandler);
+                log.info(errorHandler);
             }
         }
-        System.out.println("");
+        log.info("");
     }
  
     public void printProgressTable() {
-        System.out.println("-----------------------------------------------------------------------------------------------------------");
-        System.out.println("");
-        System.out.println(" DOCUMENTATION PROGRESS TABLE");
-        System.out.println("");
-        System.out.println("-----------------------------------------------------------------------------------------------------------");
-        System.out.println("| CONTROLLER                                                  |  DOCUMENTED  | UNDOCUMENTED |   IGNORED   |");
-        System.out.println("-----------------------------------------------------------------------------------------------------------");
+        log.info("-----------------------------------------------------------------------------------------------------------");
+        log.info("");
+        log.info(" DOCUMENTATION PROGRESS TABLE");
+        log.info("");
+        log.info("-----------------------------------------------------------------------------------------------------------");
+        log.info("| CONTROLLER                                                  |  DOCUMENTED  | UNDOCUMENTED |   IGNORED   |");
+        log.info("-----------------------------------------------------------------------------------------------------------");
         for (ControllerDocumentationProgress progress : controllersProgress.values()) {
-            System.out.println("| " + StringUtils.rightPad(progress.getController().getSimpleName(), 60)
+            log.info("| " + StringUtils.rightPad(progress.getController().getSimpleName(), 60)
             		+ "| "+StringUtils.rightPad(""+(progress.getDocumentedMethods().size()+progress.getDocumentedErrorHandlers().size()), 13)
             		+ "| "+StringUtils.rightPad(""+(progress.getUndocumentedMethods().size()+progress.getUndocumentedErrorHandlers().size()), 13)
             		+ "| "+StringUtils.rightPad(""+(progress.getIgnoredMethods().size()+progress.getIgnoredErrorHandlers().size()), 12)
             		+ "|");
         }
-        System.out.println("-----------------------------------------------------------------------------------------------------------");
-        System.out.println("| MODEL                                                       |  DOCUMENTED  | UNDOCUMENTED |   IGNORED   |");
-        System.out.println("-----------------------------------------------------------------------------------------------------------");
+        log.info("-----------------------------------------------------------------------------------------------------------");
+        log.info("| MODEL                                                       |  DOCUMENTED  | UNDOCUMENTED |   IGNORED   |");
+        log.info("-----------------------------------------------------------------------------------------------------------");
         for (ModelDocumentationProgress progress : modelsProgress.values()) {
-            System.out.println("| " + StringUtils.rightPad(progress.getModelClass().getSimpleName(), 60)
+            log.info("| " + StringUtils.rightPad(progress.getModelClass().getSimpleName(), 60)
             		+ "| "+StringUtils.rightPad(""+progress.getDocumentedFields().size(), 13)
             		+ "| "+StringUtils.rightPad(""+progress.getUndocumentedFields().size(), 13)
             		+ "| "+StringUtils.rightPad(""+progress.getIgnoredFields().size(), 12)
             		+ "|");
         }
-        System.out.println("-----------------------------------------------------------------------------------------------------------");
+        log.info("-----------------------------------------------------------------------------------------------------------");
     }
 
 	public void printOverallProgressReport() {

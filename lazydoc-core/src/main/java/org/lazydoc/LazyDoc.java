@@ -1,11 +1,18 @@
 package org.lazydoc;
 
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.core.LoggerContext;
+import org.apache.logging.log4j.core.config.Configuration;
+import org.apache.logging.log4j.core.config.LoggerConfig;
 import org.lazydoc.config.Config;
 import org.lazydoc.config.PrinterConfig;
 import org.lazydoc.parser.DataTypeParser;
 import org.lazydoc.parser.spring.SpringParser;
 import org.lazydoc.printer.DocumentationPrinter;
 import org.lazydoc.reporter.DocumentationReporter;
+
+import java.util.List;
 
 public class LazyDoc {
 
@@ -15,27 +22,27 @@ public class LazyDoc {
 	private Config config;
 	
 
-	public LazyDoc(Config config) {
+	public void document(Config config, List printerConfigs, String logLevel) throws Exception {
 		this.config = config;
 		this.reporter = new DocumentationReporter();
 		this.dataTypeParser = new DataTypeParser(reporter, config.getBaseDTOClassname());
 		this.springParser = new SpringParser(config, reporter, dataTypeParser);
-	}
 
-	public static void document(Config config) throws Exception {
-		new LazyDoc(config).document();
-	}
+		LoggerContext ctx = (LoggerContext) LogManager.getContext(false);
+		LoggerConfig loggerConfig = ctx.getConfiguration().getLoggerConfig(LogManager.ROOT_LOGGER_NAME);
+		loggerConfig.setLevel(Level.getLevel(logLevel));
+		ctx.updateLoggers();
 
-	
-	public void document() throws Exception {
 		springParser.parseSpringControllers();
-		for(PrinterConfig printerConfig : config.getPrinterConfigs()) {
-            printerConfig.setDomains(springParser.getDomains());
-            printerConfig.setDataTypes(dataTypeParser.getDataTypes());
-            printerConfig.setListOfCommonErrors(springParser.getListOfCommonErrors());
-            printerConfig.setOutputPath(printerConfig.getOutputPath());
-			DocumentationPrinter printer = (DocumentationPrinter)Class.forName(printerConfig.getClassName()).newInstance();
-			printer.print(printerConfig);
+		if (printerConfigs != null) {
+			for(PrinterConfig printerConfig : (List<PrinterConfig>)printerConfigs) {
+				printerConfig.setDomains(springParser.getDomains());
+				printerConfig.setDataTypes(dataTypeParser.getDataTypes());
+				printerConfig.setListOfCommonErrors(springParser.getListOfCommonErrors());
+				printerConfig.setOutputPath(printerConfig.getOutputPath());
+				DocumentationPrinter printer = (DocumentationPrinter)Class.forName(printerConfig.getClassName()).newInstance();
+				printer.print(printerConfig);
+			}
 		}
 		reporter.printOverallProgressReport();
         if(config.isBreakOnUndocumented() && reporter.getUndocumentedCount() > 0) {
