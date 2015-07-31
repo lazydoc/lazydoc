@@ -17,8 +17,8 @@ package org.lazydoc.plugin;
  */
 
 import org.apache.commons.beanutils.BeanUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.maven.artifact.Artifact;
+import org.apache.maven.artifact.DependencyResolutionRequiredException;
 import org.apache.maven.artifact.factory.ArtifactFactory;
 import org.apache.maven.artifact.metadata.ArtifactMetadataSource;
 import org.apache.maven.artifact.repository.ArtifactRepository;
@@ -35,10 +35,8 @@ import org.apache.maven.project.MavenProjectBuilder;
 import org.apache.maven.project.artifact.MavenMetadataSource;
 import org.lazydoc.config.Config;
 import org.lazydoc.config.PrinterConfig;
-import org.springframework.context.annotation.Bean;
 
 import java.io.File;
-import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -118,7 +116,7 @@ public class LazyDocMojo extends AbstractMojo {
      * @throws MojoExecutionException if a problem happens
      */
     private ClassLoader getClassLoader()
-            throws MojoExecutionException {
+            throws MojoExecutionException, DependencyResolutionRequiredException {
         List<URL> classpathURLs = new ArrayList<URL>();
         this.addRelevantPluginDependenciesToClasspath(classpathURLs);
         this.addRelevantProjectDependenciesToClasspath(classpathURLs);
@@ -139,9 +137,10 @@ public class LazyDocMojo extends AbstractMojo {
             throws MojoExecutionException {
         try {
             for (Artifact classPathElement : new HashSet<Artifact>(this.pluginDependencies)) {
+                URL url = classPathElement.getFile().toURI().toURL();
                 getLog().debug("Adding plugin dependency artifact: " + classPathElement.getArtifactId()
-                        + " to classpath");
-                path.add(classPathElement.getFile().toURI().toURL());
+                        + " to classpath ("+url+")");
+                path.add(url);
             }
         } catch (MalformedURLException e) {
             throw new MojoExecutionException("Error during setting up classpath", e);
@@ -157,7 +156,7 @@ public class LazyDocMojo extends AbstractMojo {
      * @throws MojoExecutionException if a problem happens
      */
     private void addRelevantProjectDependenciesToClasspath(List<URL> path)
-            throws MojoExecutionException {
+            throws MojoExecutionException, DependencyResolutionRequiredException {
         try {
             getLog().debug("Project Dependencies will be included.");
 
@@ -173,9 +172,12 @@ public class LazyDocMojo extends AbstractMojo {
             }
 
             for (Artifact classPathElement : artifacts) {
+                getLog().debug("Artifact: "+classPathElement);
+                getLog().debug("Artifact file: "+classPathElement.getFile());
+                URL url = classPathElement.getFile().toURI().toURL();
                 getLog().debug("Adding project dependency artifact: " + classPathElement.getArtifactId()
-                        + " to classpath");
-                path.add(classPathElement.getFile().toURI().toURL());
+                        + " to classpath ("+url+")");
+                path.add(url);
             }
 
         } catch (MalformedURLException e) {
@@ -191,11 +193,34 @@ public class LazyDocMojo extends AbstractMojo {
      * @param theClasspathFiles the list where to collect the scope specific output directories
      */
     @SuppressWarnings("unchecked")
-    protected void collectProjectArtifactsAndClasspath(List<Artifact> artifacts, List<File> theClasspathFiles) {
-        artifacts.addAll(project.getCompileArtifacts());
+    protected void collectProjectArtifactsAndClasspath(List<Artifact> artifacts, List<File> theClasspathFiles) throws MojoExecutionException, DependencyResolutionRequiredException {
+        artifacts.addAll(project.getCompileDependencies());
+        artifacts.addAll(resolveProjectDependencies(project.getDependencies()));
         theClasspathFiles.add(new File(project.getBuild().getOutputDirectory()));
         getLog().debug("Collected project artifacts " + artifacts);
         getLog().debug("Collected project classpath " + theClasspathFiles);
+    }
+
+    private Set<Artifact> resolveProjectDependencies(List<Dependency> dependencies) throws MojoExecutionException {
+        Set<Artifact> resolvedArtifacts = new HashSet<>();
+        try {
+            getLog().debug("Project dependencies: "+dependencies);
+            // make Artifacts of all the dependencies
+            Set<Artifact> dependencyArtifacts = MavenMetadataSource.createArtifacts(this.artifactFactory, dependencies, null, null, null);
+            getLog().debug("Artifacts build from dependencies: "+dependencyArtifacts);
+            getLog().debug("Artifact resolver: "+artifactResolver);
+
+            for (Artifact dependencyArtifact : dependencyArtifacts) {
+                artifactResolver.resolve(dependencyArtifact, this.remoteRepositories, this.localRepository);
+                ArtifactResolutionResult result = artifactResolver.resolveTransitively(dependencyArtifacts, dependencyArtifact, this.remoteRepositories, this.localRepository, this.metadataSource);
+                resolvedArtifacts.addAll(result.getArtifacts());
+            }
+            resolvedArtifacts.addAll(dependencyArtifacts);
+            return resolvedArtifacts;
+        } catch (Exception ex) {
+            throw new MojoExecutionException("Encountered problems resolving dependencies of the executable "
+                    + "in preparation for its execution.", ex);
+        }
     }
 
 
