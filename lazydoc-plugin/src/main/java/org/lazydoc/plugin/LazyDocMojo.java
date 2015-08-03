@@ -109,12 +109,6 @@ public class LazyDocMojo extends AbstractMojo {
         }
     }
 
-    /**
-     * Set up a classloader for the execution of the main class.
-     *
-     * @return the classloader
-     * @throws MojoExecutionException if a problem happens
-     */
     private ClassLoader getClassLoader()
             throws MojoExecutionException, DependencyResolutionRequiredException {
         List<URL> classpathURLs = new ArrayList<URL>();
@@ -126,13 +120,6 @@ public class LazyDocMojo extends AbstractMojo {
         return new URLClassLoader(classpathURLs.toArray(new URL[classpathURLs.size()]));
     }
 
-    /**
-     * Add any relevant project dependencies to the classpath. Indirectly takes includePluginDependencies and
-     * ExecutableDependency into consideration.
-     *
-     * @param path classpath of {@link java.net.URL} objects
-     * @throws MojoExecutionException if a problem happens
-     */
     private void addRelevantPluginDependenciesToClasspath(List<URL> path)
             throws MojoExecutionException {
         try {
@@ -149,12 +136,6 @@ public class LazyDocMojo extends AbstractMojo {
     }
 
 
-    /**
-     * Add any relevant project dependencies to the classpath. Takes includeProjectDependencies into consideration.
-     *
-     * @param path classpath of {@link java.net.URL} objects
-     * @throws MojoExecutionException if a problem happens
-     */
     private void addRelevantProjectDependenciesToClasspath(List<URL> path)
             throws MojoExecutionException, DependencyResolutionRequiredException {
         try {
@@ -185,13 +166,6 @@ public class LazyDocMojo extends AbstractMojo {
         }
     }
 
-    /**
-     * Collects the project artifacts in the specified List and the project specific classpath (build output and build
-     * test output) Files in the specified List, depending on the plugin classpathScope value.
-     *
-     * @param artifacts         the list where to collect the scope specific artifacts
-     * @param theClasspathFiles the list where to collect the scope specific output directories
-     */
     @SuppressWarnings("unchecked")
     protected void collectProjectArtifactsAndClasspath(List<Artifact> artifacts, List<File> theClasspathFiles) throws MojoExecutionException, DependencyResolutionRequiredException {
         artifacts.addAll(project.getCompileDependencies());
@@ -208,7 +182,6 @@ public class LazyDocMojo extends AbstractMojo {
             // make Artifacts of all the dependencies
             Set<Artifact> dependencyArtifacts = MavenMetadataSource.createArtifacts(this.artifactFactory, dependencies, null, null, null);
             getLog().debug("Artifacts build from dependencies: "+dependencyArtifacts);
-            getLog().debug("Artifact resolver: "+artifactResolver);
 
             for (Artifact dependencyArtifact : dependencyArtifacts) {
                 artifactResolver.resolve(dependencyArtifact, this.remoteRepositories, this.localRepository);
@@ -221,60 +194,6 @@ public class LazyDocMojo extends AbstractMojo {
             throw new MojoExecutionException("Encountered problems resolving dependencies of the executable "
                     + "in preparation for its execution.", ex);
         }
-    }
-
-
-    /**
-     * Get the artifact which refers to the POM of the executable artifact.
-     *
-     * @param executableArtifact this artifact refers to the actual assembly.
-     * @return an artifact which refers to the POM of the executable artifact.
-     */
-    private Artifact getExecutablePomArtifact(Artifact executableArtifact) {
-        return this.artifactFactory.createBuildArtifact(executableArtifact.getGroupId(),
-                executableArtifact.getArtifactId(),
-                executableArtifact.getVersion(), "pom");
-    }
-
-    /**
-     * Resolve the executable dependencies for the specified project
-     *
-     * @param executablePomArtifact the project's POM
-     * @return a set of Artifacts
-     * @throws MojoExecutionException if a failure happens
-     */
-    private Set<Artifact> resolveExecutableDependencies(Artifact executablePomArtifact)
-            throws MojoExecutionException {
-
-        Set<Artifact> executableDependencies;
-        try {
-            MavenProject executableProject =
-                    this.projectBuilder.buildFromRepository(executablePomArtifact, this.remoteRepositories,
-                            this.localRepository);
-
-            // get all of the dependencies for the executable project
-            List<Dependency> dependencies = executableProject.getDependencies();
-
-            // make Artifacts of all the dependencies
-            Set<Artifact> dependencyArtifacts =
-                    MavenMetadataSource.createArtifacts(this.artifactFactory, dependencies, null, null, null);
-
-            // not forgetting the Artifact of the project itself
-            dependencyArtifacts.add(executableProject.getArtifact());
-
-            // resolve all dependencies transitively to obtain a comprehensive list of assemblies
-            ArtifactResolutionResult result =
-                    artifactResolver.resolveTransitively(dependencyArtifacts, executablePomArtifact,
-                            Collections.emptyMap(), this.localRepository,
-                            this.remoteRepositories, metadataSource, null,
-                            Collections.emptyList());
-            executableDependencies = result.getArtifacts();
-        } catch (Exception ex) {
-            throw new MojoExecutionException("Encountered problems resolving dependencies of the executable "
-                    + "in preparation for its execution.", ex);
-        }
-
-        return executableDependencies;
     }
 
 }
