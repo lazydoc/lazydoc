@@ -5,7 +5,7 @@
     <groupId>org.lazydoc</groupId>
     <artifactId>lazydoc</artifactId>
     <packaging>pom</packaging>
-    <version>1.0.1-SNAPSHOT</version>
+    <version>1.0.2-SNAPSHOT</version>
 
     <name>${project.groupId}:${project.artifactId}</name>
     <description>A framework for generating automatic REST API documentation.</description>
