@@ -3,6 +3,8 @@ package org.lazydoc.printer;
 import com.cedarsoftware.util.io.JsonWriter;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.lazydoc.annotation.InsertPosition;
 import org.lazydoc.config.PrinterConfig;
 import org.lazydoc.model.*;
@@ -195,7 +197,7 @@ public class DocBookDocumentationPrinter extends DocumentationPrinter {
 
         xml += printEndTag("simplesect");
         xml += printRequestBody(operation.getParameters());
-        xml += printResponse(operation.getResponseClass(), operation.getResponseStatus());
+        xml += printResponse(operation.getOperationResponse(), operation.getResponseStatus());
 
         if (operation.hasExternalDocumentation() && operation.getExternalInsertPosition().equals(InsertPosition.BOTTOM)) {
             xml += printShortTagWithAttributes("xi:include", "href=\"../../../static/" + operation.getExternalDocumentation() + ".xml\"");
@@ -240,8 +242,8 @@ public class DocBookDocumentationPrinter extends DocumentationPrinter {
         return xml;
     }
 
-    private String printResponse(String responseClass, String responseStatus) {
-        DocDataType dataType = printerConfig.getDataTypes().get(responseClass);
+    private String printResponse(OperationResponse operationResponse, String responseStatus) {
+        DocDataType dataType = printerConfig.getDataTypes().get(operationResponse.getResponseType());
         String xml = printStartTag("simplesect");
         xml += printFullTag("title", "Structure of the response");
         xml += printFullTag("para", "If successful, the call returns HTTP status " + responseStatus);

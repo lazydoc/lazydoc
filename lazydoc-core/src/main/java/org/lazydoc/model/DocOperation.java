@@ -14,7 +14,7 @@ public class DocOperation implements Comparable<DocOperation> {
 	private String httpMethod = "";
 	private String responseStatus = "";
 	private String nickname = "";
-	private String responseClass = "";
+	private OperationResponse operationResponse = new OperationResponse();
 	private String shortDescription = "";
 	private String summary = "";
 	private String notes = "";
@@ -81,12 +81,12 @@ public class DocOperation implements Comparable<DocOperation> {
 		this.nickname = nickname;
 	}
 
-	public String getResponseClass() {
-		return responseClass;
+	public OperationResponse getOperationResponse() {
+		return operationResponse;
 	}
 
-	public void setResponseClass(String responseClass) {
-		this.responseClass = responseClass;
+	public void setOperationResponse(OperationResponse operationResponse) {
+		this.operationResponse = operationResponse;
 	}
 
 	public String getShortDescription() {

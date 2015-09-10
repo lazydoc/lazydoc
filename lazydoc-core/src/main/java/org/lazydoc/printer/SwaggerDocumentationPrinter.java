@@ -100,7 +100,7 @@ public class SwaggerDocumentationPrinter extends DocumentationPrinter {
 		String json = "{\n";
 		json += "   \"method\": \"" + operation.getHttpMethod() + "\",\n";
 		json += "   \"nickname\": \"" + operation.getNickname() + "\",\n";
-		json += "   \"responseClass\": \"" + operation.getResponseClass() + "\",\n";
+		json += "   \"responseClass\": \"" + getOperationResponse(operation.getOperationResponse()) + "\",\n";
 		json += "   \"parameters\": [\n";
 		for (DocParameter parameter : operation.getParameters()) {
 			parameters.add("       <%@include file=\"../../_params/" + parameter.getReferenceName() + ".jsp\" %>");
@@ -115,6 +115,13 @@ public class SwaggerDocumentationPrinter extends DocumentationPrinter {
 		json += "   \"level\": \"\"\n";
 		json += "}\n";
 		return json;
+	}
+
+	private String getOperationResponse(OperationResponse operationResponse) {
+		if(operationResponse.isInList()) {
+			return "List["+operationResponse.getResponseType()+"]";
+		}
+		return operationResponse.getResponseType();
 	}
 
 	public String printParameterToJson(DocParameter parameter) {

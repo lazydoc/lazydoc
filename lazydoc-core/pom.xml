@@ -3,13 +3,13 @@
     <parent>
         <groupId>org.lazydoc</groupId>
         <artifactId>lazydoc</artifactId>
-        <version>1.0.2-SNAPSHOT</version>
+        <version>1.0.4-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>org.lazydoc</groupId>
     <artifactId>lazydoc-core</artifactId>
-    <version>1.0.2-SNAPSHOT</version>
+    <version>1.0.4-SNAPSHOT</version>
 
     <name>${project.groupId}:${project.artifactId}</name>
     <description>The lazydoc core functionality.</description>
@@ -20,7 +20,7 @@
         <dependency>
             <groupId>org.lazydoc</groupId>
             <artifactId>lazydoc-annotation</artifactId>
-            <version>1.0.2-SNAPSHOT</version>
+            <version>1.0.4-SNAPSHOT</version>
         </dependency>
 
         <dependency>

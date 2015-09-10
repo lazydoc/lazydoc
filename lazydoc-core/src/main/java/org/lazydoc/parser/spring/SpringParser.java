@@ -347,7 +347,7 @@ public class SpringParser {
         DocOperation operation = new DocOperation();
         operation.setHttpMethod(getHttpMethod(method));
         operation.setResponseStatus(getResponseStatus(method));
-        operation.setResponseClass(getResponseClass(method));
+        operation.setOperationResponse(getResponseClass(method));
         operation.setNickname(method.getName());
         operation.setPath(path);
         operation.setParameters(getParametersOfMethod(method, path));
@@ -474,28 +474,38 @@ public class SpringParser {
         return HttpStatus.OK.value()+" - "+HttpStatus.OK.getReasonPhrase();
     }
 
-    private String getResponseClass(Method method) {
+    private OperationResponse getResponseClass(Method method) {
+        OperationResponse operationResponse = new OperationResponse();
         Method documentedMethod = getMethodFromDocumentation(method);
         if (documentedMethod.isAnnotationPresent(ResponseDescription.class)) {
             ResponseDescription responseDescription = documentedMethod.getAnnotation(ResponseDescription.class);
             if (responseDescription.type() != void.class) {
                 dataTypeParser.addDataType(responseDescription.type());
-                return removeEnd(responseDescription.type().getSimpleName(), config.getDataTypeSuffix());
+                operationResponse.setResponseType(removeEnd(responseDescription.type().getSimpleName(), config.getDataTypeSuffix()));
+                log.debug("GetOperationResponse - ResponseDescription "+operationResponse);
+                return operationResponse;
             }
         }
-        if (method.getDeclaringClass().isAnnotationPresent(RestController.class) || method.isAnnotationPresent(ResponseBody.class)) {
+        if (methodHasResponseType(method)) {
             if (Inspector.isListSetOrArray(method.getReturnType())) {
                 Class<?> genericClass = Inspector.getGenericClassOfList(method.getReturnType(), method.getGenericReturnType());
                 dataTypeParser.addDataType(genericClass);
-                return "List[" + removeEnd(genericClass.getSimpleName(), config.getDataTypeSuffix()) + "]";
-            }
-            if (!method.getReturnType().getName().startsWith("java.lang")) {
+                operationResponse.setResponseType(removeEnd(genericClass.getSimpleName(), config.getDataTypeSuffix()));
+                operationResponse.setInList(true);
+                log.debug("GetOperationResponse - RestController or ResponseBody annotation - list "+operationResponse);
+                return operationResponse;
+            } else {
                 dataTypeParser.addDataType(method.getReturnType());
+                operationResponse.setResponseType(removeEnd(method.getReturnType().getSimpleName(), config.getDataTypeSuffix()));
+                log.debug("GetOperationResponse - RestController or ResponseBody annotation - no list"+operationResponse);
+                return operationResponse;
             }
-            return removeEnd(method.getReturnType().getSimpleName(), config.getDataTypeSuffix());
-        } else {
-            return "";
         }
+        return operationResponse;
+    }
+
+    private boolean methodHasResponseType(Method method) {
+        return method.getDeclaringClass().isAnnotationPresent(RestController.class) || method.isAnnotationPresent(ResponseBody.class);
     }
 
     private List<DocParameter> getParametersOfMethod(Method method, String apiPath) {
