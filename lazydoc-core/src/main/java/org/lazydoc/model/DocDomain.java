@@ -1,12 +1,12 @@
 package org.lazydoc.model;
 
+import org.apache.commons.lang3.StringUtils;
+import org.lazydoc.annotation.InsertPosition;
+
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
-
-import org.apache.commons.lang3.StringUtils;
-import org.lazydoc.annotation.InsertPosition;
 
 public class DocDomain {
 	protected String domain = "";
@@ -18,6 +18,7 @@ public class DocDomain {
 	private Set<DocOperation> operations = new TreeSet<DocOperation>();
 	private Map<Integer, DocSubDomain> subDomains = new TreeMap<Integer, DocSubDomain>();
 	private Set<DocError> errorList = new TreeSet<>();
+	private boolean deprecated = false;
 
 	public String getDomain() {
 		return domain;
@@ -106,4 +107,11 @@ public class DocDomain {
 		return StringUtils.isNotBlank(externalDocumentation);
 	}
 
+	public boolean isDeprecated() {
+		return deprecated;
+	}
+
+	public void setDeprecated(boolean deprecated) {
+		this.deprecated = deprecated;
+	}
 }

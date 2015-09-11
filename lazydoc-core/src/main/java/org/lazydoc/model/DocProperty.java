@@ -1,13 +1,14 @@
 package org.lazydoc.model;
 
-import static org.apache.commons.lang3.StringUtils.removeEnd;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.commons.lang3.StringUtils;
+import static org.apache.commons.lang3.StringUtils.removeEnd;
 
-public class DocProperty {
+public class DocProperty implements Comparable<DocProperty> {
+	private int order = 0;
 	private String name = "";
 	private String description = "";
 	private String type = "";
@@ -17,6 +18,7 @@ public class DocProperty {
 	private boolean request = true;
 	private boolean response = true;
 	private boolean list = false;
+	private boolean deprecated = false;
 
 	public boolean hasEnumValues() {
 		return !enumValues.isEmpty();
@@ -113,5 +115,18 @@ public class DocProperty {
 
 	public boolean hasSample() {
 		return sample.length > 0;
+	}
+
+	public boolean isDeprecated() {
+		return deprecated;
+	}
+
+	public void setDeprecated(boolean deprecated) {
+		this.deprecated = deprecated;
+	}
+
+	@Override
+	public int compareTo(DocProperty property) {
+		return Integer.compare(order, property.order);
 	}
 }

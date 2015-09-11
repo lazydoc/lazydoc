@@ -1,7 +1,7 @@
 package org.lazydoc.model;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 
 import static org.apache.commons.lang3.StringUtils.removeEnd;
 
@@ -9,7 +9,7 @@ public class DocDataType {
 	private String name = "";
 	private String id = "";
 	private boolean list = false;
-	private List<DocProperty> properties = new ArrayList<DocProperty>();
+	private Set<DocProperty> properties = new TreeSet<>();
 
 	public String getName() {
 		return name;
@@ -35,11 +35,11 @@ public class DocDataType {
 		this.list = list;
 	}
 
-	public List<DocProperty> getProperties() {
+	public Set<DocProperty> getProperties() {
 		return properties;
 	}
 
-	public void setProperties(List<DocProperty> properties) {
+	public void setProperties(Set<DocProperty> properties) {
 		this.properties = properties;
 	}
 }

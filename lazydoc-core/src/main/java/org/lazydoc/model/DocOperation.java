@@ -1,10 +1,10 @@
 package org.lazydoc.model;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import org.apache.commons.lang3.StringUtils;
 import org.lazydoc.annotation.InsertPosition;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class DocOperation implements Comparable<DocOperation> {
 	private Integer order = 0;
@@ -24,6 +24,7 @@ public class DocOperation implements Comparable<DocOperation> {
 	private String role;
 	private String externalDocumentation;
 	private InsertPosition externalInsertPosition = InsertPosition.TOP;
+	private boolean deprecated;
 
 	public Integer getOrder() {
 		return order;
@@ -175,5 +176,13 @@ public class DocOperation implements Comparable<DocOperation> {
 
 	public boolean hasExternalDocumentation() {
 		return StringUtils.isNotBlank(externalDocumentation);
+	}
+
+	public boolean isDeprecated() {
+		return deprecated;
+	}
+
+	public void setDeprecated(boolean deprecated) {
+		this.deprecated = deprecated;
 	}
 }

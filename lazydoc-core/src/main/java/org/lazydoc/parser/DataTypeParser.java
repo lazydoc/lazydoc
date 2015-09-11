@@ -1,17 +1,5 @@
 package org.lazydoc.parser;
 
-import static org.apache.commons.lang3.StringUtils.removeEnd;
-
-import java.beans.BeanInfo;
-import java.beans.IntrospectionException;
-import java.beans.Introspector;
-import java.beans.PropertyDescriptor;
-import java.lang.reflect.Field;
-import java.util.Map;
-import java.util.TreeMap;
-
-import javax.validation.constraints.NotNull;
-
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -23,6 +11,17 @@ import org.lazydoc.model.DocParameter;
 import org.lazydoc.model.DocProperty;
 import org.lazydoc.reporter.DocumentationReporter;
 import org.lazydoc.util.Inspector;
+
+import javax.validation.constraints.NotNull;
+import java.beans.BeanInfo;
+import java.beans.IntrospectionException;
+import java.beans.Introspector;
+import java.beans.PropertyDescriptor;
+import java.lang.reflect.Field;
+import java.util.Map;
+import java.util.TreeMap;
+
+import static org.apache.commons.lang3.StringUtils.removeEnd;
 
 public class DataTypeParser {
 
@@ -102,12 +101,22 @@ public class DataTypeParser {
 				property.setResponse(isForResponse(propertyField));
 				property.setDescription(getDescription(propertyField, property));
 				property.setSample(getSample(propertyField));
+				property.setDeprecated(isDeprecated(propertyField, descriptor));
 				dataType.getProperties().add(property);
 				addFurtherVOClasses(propertyType);
 			}
 		} catch (IntrospectionException e) {
 			throw new RuntimeException(e);
 		}
+	}
+
+	private boolean isDeprecated(Field propertyField, PropertyDescriptor property) {
+		if(propertyField.isAnnotationPresent(Deprecated.class)) {
+			return true;
+		}
+		boolean readMethodIsDeprecated = property.getReadMethod() != null && property.getReadMethod().isAnnotationPresent(Deprecated.class);
+		boolean writeMethodIsDeprecated = property.getWriteMethod() != null && property.getWriteMethod().isAnnotationPresent(Deprecated.class);
+		return readMethodIsDeprecated || writeMethodIsDeprecated;
 	}
 
 	private void addEnumValuesToProperty(Class<?> propertyType, DocProperty property, Field propertyField) {

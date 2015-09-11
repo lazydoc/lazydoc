@@ -95,6 +95,7 @@ public class SpringParser {
                         requestMappings.add(path);
                         DocDomain domain = getDomain(method);
                         domain.setErrorList(errorList);
+                        domain.setDeprecated(controller.isAnnotationPresent(Deprecated.class));
                         addOperation(method, path, domain);
                         reporter.addDocumentedMethod(controller, method.toString());
                     }
@@ -363,6 +364,7 @@ public class SpringParser {
             operation.setExternalDocumentation(operationDescription.externalDocumentation().location());
             operation.setExternalInsertPosition(operationDescription.externalDocumentation().postion());
         }
+        operation.setDeprecated(method.isAnnotationPresent(Deprecated.class));
         domain.getOperations().add(operation);
     }
 
