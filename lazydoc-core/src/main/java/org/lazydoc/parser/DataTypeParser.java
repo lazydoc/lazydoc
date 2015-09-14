@@ -111,7 +111,12 @@ public class DataTypeParser {
 				int order = 1;
 				for (String propertyName : propertyOrder.value()) {
 					DocProperty property = getPropertyByName(propertyName, dataType.getProperties());
-					property.setOrder(order++);
+					if(property != null) {
+						property.setOrder(order++);
+					} else {
+						log.warn("Property "+propertyName+" not found in property list of type "+dataType.getName());
+					}
+
 				}
 			}
 			Collections.sort(dataType.getProperties());
@@ -130,7 +135,7 @@ public class DataTypeParser {
 				return property;
 			}
 		}
-		throw new RuntimeException("Property "+propertyName+" from JsonPropertyOrder not found in property list");
+		return null;
 	}
 
 	private boolean isDeprecated(Field propertyField, PropertyDescriptor property) {
