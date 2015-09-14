@@ -140,7 +140,7 @@ public class DocProperty implements Comparable<DocProperty> {
 			if(this.required == property.required) {
 				return this.name.compareTo(property.name);
 			} else {
-				return this.required ? 1 : -1;
+				return this.required ? -1 : 1;
 			}
 		}
 		return compareResult;
