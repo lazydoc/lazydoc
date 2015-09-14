@@ -1,5 +1,6 @@
 package org.lazydoc.parser;
 
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -18,8 +19,7 @@ import java.beans.IntrospectionException;
 import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
 import java.lang.reflect.Field;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
 
 import static org.apache.commons.lang3.StringUtils.removeEnd;
 
@@ -95,6 +95,7 @@ public class DataTypeParser {
 				DocProperty property = new DocProperty();
                 addEnumValuesToProperty(propertyType, property, propertyField);
 				property.setName(descriptor.getName());
+				property.setOrder(getOrder(propertyField));
 				property.setType(getPropertyType(propertyType, propertyField));
 				property.setRequired(isFieldRequired(propertyField));
 				property.setRequest(isForRequest(propertyField));
@@ -105,9 +106,31 @@ public class DataTypeParser {
 				dataType.getProperties().add(property);
 				addFurtherVOClasses(propertyType);
 			}
+			if(clazz.isAnnotationPresent(JsonPropertyOrder.class)) {
+				JsonPropertyOrder propertyOrder = clazz.getAnnotation(JsonPropertyOrder.class);
+				int order = 1;
+				for (String propertyName : propertyOrder.value()) {
+					DocProperty property = getPropertyByName(propertyName, dataType.getProperties());
+					property.setOrder(order++);
+				}
+			}
+			Collections.sort(dataType.getProperties());
 		} catch (IntrospectionException e) {
 			throw new RuntimeException(e);
 		}
+	}
+
+	private int getOrder(Field propertyField) {
+		return getPropertyDescription(propertyField).order();
+	}
+
+	private DocProperty getPropertyByName(String propertyName, List<DocProperty> properties) {
+		for (DocProperty property : properties) {
+			if(property.getName().equals(propertyName)) {
+				return property;
+			}
+		}
+		throw new RuntimeException("Property "+propertyName+" from JsonPropertyOrder not found in property list");
 	}
 
 	private boolean isDeprecated(Field propertyField, PropertyDescriptor property) {

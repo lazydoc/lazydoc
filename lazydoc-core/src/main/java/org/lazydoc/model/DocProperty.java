@@ -8,7 +8,7 @@ import java.util.List;
 import static org.apache.commons.lang3.StringUtils.removeEnd;
 
 public class DocProperty implements Comparable<DocProperty> {
-	private int order = 0;
+	private int order = Integer.MAX_VALUE;
 	private String name = "";
 	private String description = "";
 	private String type = "";
@@ -125,8 +125,20 @@ public class DocProperty implements Comparable<DocProperty> {
 		this.deprecated = deprecated;
 	}
 
+	public int getOrder() {
+		return order;
+	}
+
+	public void setOrder(int order) {
+		this.order = order;
+	}
+
 	@Override
 	public int compareTo(DocProperty property) {
-		return Integer.compare(order, property.order);
+		int compareResult = Integer.compare(this.order, property.order);
+		if(compareResult == 0) {
+			return this.name.compareTo(property.name);
+		}
+		return compareResult;
 	}
 }
