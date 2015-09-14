@@ -137,7 +137,11 @@ public class DocProperty implements Comparable<DocProperty> {
 	public int compareTo(DocProperty property) {
 		int compareResult = Integer.compare(this.order, property.order);
 		if(compareResult == 0) {
-			return this.name.compareTo(property.name);
+			if(this.required == property.required) {
+				return this.name.compareTo(property.name);
+			} else {
+				return this.required ? 1 : -1;
+			}
 		}
 		return compareResult;
 	}
