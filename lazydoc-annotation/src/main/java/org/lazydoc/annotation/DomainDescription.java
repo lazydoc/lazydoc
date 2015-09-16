@@ -46,5 +46,5 @@ public @interface DomainDescription {
 
 	SubDomainDescription subDomain() default @SubDomainDescription(name = "");
 
-	ExternalDocumentation externalDocumentation() default @ExternalDocumentation(location = "");
+	ExternalDocumentation[] externalDocumentation() default {};
 }

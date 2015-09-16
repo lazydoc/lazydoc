@@ -14,6 +14,8 @@ import static org.apache.commons.lang3.StringUtils.join;
 
 public class SwaggerDocumentationPrinter extends DocumentationPrinter {
 
+	// TODO update SwaggerDocumentationPrinter
+
     private Set<String> models = new HashSet<>();
 
     @Override
@@ -117,7 +119,7 @@ public class SwaggerDocumentationPrinter extends DocumentationPrinter {
 		return json;
 	}
 
-	private String getOperationResponse(OperationResponse operationResponse) {
+	private String getOperationResponse(DocOperationResponse operationResponse) {
 		if(operationResponse.isInList()) {
 			return "List["+operationResponse.getResponseType()+"]";
 		}

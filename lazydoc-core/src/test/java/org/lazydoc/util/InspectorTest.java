@@ -4,6 +4,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.lang.reflect.Method;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 
@@ -85,6 +86,16 @@ public class InspectorTest {
     @Test
     public void testIsNotAListSetOrArray() throws Exception {
         assertThat(Inspector.isListSetOrArray(methodWithStringResponse.getReturnType()), is(false));
+    }
+
+    @Test
+    public void testIsMap() {
+        assertThat(Inspector.isMap(HashMap.class), is(true));
+    }
+
+    @Test
+    public void testIsNoMap() {
+        assertThat(Inspector.isMap(List.class), is(false));
     }
 
 

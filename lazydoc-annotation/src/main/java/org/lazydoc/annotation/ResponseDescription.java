@@ -8,5 +8,7 @@ public @interface ResponseDescription {
 
 	String description() default "";
 
+	String staticSample() default "";
+
 	Class<?> type() default void.class;
 }

@@ -1,11 +1,17 @@
 package org.lazydoc.parser;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.hibernate.validator.constraints.NotBlank;
+import org.hibernate.validator.constraints.NotEmpty;
 import org.lazydoc.annotation.IgnoreForDocumentation;
 import org.lazydoc.annotation.PropertyDescription;
+import org.lazydoc.annotation.PropertyMapDescription;
 import org.lazydoc.annotation.Sample;
 import org.lazydoc.model.DocDataType;
 import org.lazydoc.model.DocParameter;
@@ -19,7 +25,11 @@ import java.beans.IntrospectionException;
 import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
 import java.lang.reflect.Field;
-import java.util.*;
+import java.lang.reflect.Method;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 import static org.apache.commons.lang3.StringUtils.removeEnd;
 
@@ -89,20 +99,34 @@ public class DataTypeParser {
 			for (PropertyDescriptor descriptor : beanInfo.getPropertyDescriptors()) {
 				Class<?> propertyType = descriptor.getPropertyType();
 				Field propertyField = getPropertyField(clazz, descriptor);
-				if (skipThisField(propertyField)) {
+				PropertyDescription propertyDescription = getPropertyDescription(propertyField, descriptor);
+				if (skipThisField(propertyField, propertyDescription, descriptor) || propertyDescription == null) {
 					continue;
 				}
 				DocProperty property = new DocProperty();
                 addEnumValuesToProperty(propertyType, property, propertyField);
 				property.setName(descriptor.getName());
-				property.setOrder(getOrder(propertyField));
-				property.setType(getPropertyType(propertyType, propertyField));
-				property.setRequired(isFieldRequired(propertyField));
-				property.setRequest(isForRequest(propertyField));
-				property.setResponse(isForResponse(propertyField));
-				property.setDescription(getDescription(propertyField, property));
-				property.setSample(getSample(propertyField));
+				property.setOrder(propertyDescription.order());
+				property.setRequired(isFieldRequired(propertyField, propertyDescription));
+				property.setRequest(isForRequest(propertyDescription, descriptor));
+				property.setResponse(isForResponse(propertyDescription, descriptor));
+				property.setDescription(getDescription(propertyField, property, propertyDescription));
+				property.setSample(getSample(propertyField, descriptor));
 				property.setDeprecated(isDeprecated(propertyField, descriptor));
+				property.setType(getPropertyType(propertyType, propertyField));
+				property.setList(Inspector.isListSetOrArray(propertyType));
+				property.setPrimitive(propertyType.isPrimitive());
+				property.setRequestNullValueSample(allowNullValueSample(descriptor.getReadMethod()));
+				property.setRequestNullValueSample(allowNullValueSample(descriptor.getWriteMethod()));
+				if (Inspector.isMap(propertyType)) {
+					property.setMap(true);
+					if(propertyField.isAnnotationPresent(PropertyMapDescription.class)) {
+						PropertyMapDescription mapDescription = propertyField.getAnnotation(PropertyMapDescription.class);
+						property.setMapKeyDescription(mapDescription.keyDescription());
+						property.setMapValueDescription(mapDescription.valueDescription());
+					}
+				}
+				dataType.setNullValuesInSample(allowNullValuesInSample(clazz));
 				dataType.getProperties().add(property);
 				addFurtherVOClasses(propertyType);
 			}
@@ -125,8 +149,31 @@ public class DataTypeParser {
 		}
 	}
 
-	private int getOrder(Field propertyField) {
-		return getPropertyDescription(propertyField).order();
+	private boolean allowNullValueSample(Method method) {
+		if(method != null && method.isAnnotationPresent(JsonSerialize.class)) {
+			JsonSerialize jsonSerialize = method.getAnnotation(JsonSerialize.class);
+			// TODO include modern way
+			if(jsonSerialize.include().equals(JsonSerialize.Inclusion.NON_NULL)) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	private boolean allowNullValuesInSample(Class<?> clazz) {
+		if(clazz != null && clazz.isAnnotationPresent(JsonSerialize.class)) {
+			JsonSerialize jsonSerialize = clazz.getAnnotation(JsonSerialize.class);
+			// TODO include modern way
+			if(jsonSerialize.include().equals(JsonSerialize.Inclusion.NON_NULL)) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+
+	private PropertyDescription getPropertyDescription(Method method) {
+		return method != null ? method.getAnnotation(PropertyDescription.class) : null;
 	}
 
 	private DocProperty getPropertyByName(String propertyName, List<DocProperty> properties) {
@@ -139,7 +186,7 @@ public class DataTypeParser {
 	}
 
 	private boolean isDeprecated(Field propertyField, PropertyDescriptor property) {
-		if(propertyField.isAnnotationPresent(Deprecated.class)) {
+		if(propertyField != null && propertyField.isAnnotationPresent(Deprecated.class)) {
 			return true;
 		}
 		boolean readMethodIsDeprecated = property.getReadMethod() != null && property.getReadMethod().isAnnotationPresent(Deprecated.class);
@@ -162,11 +209,10 @@ public class DataTypeParser {
         }
 	}
 
-	private boolean isFieldRequired(Field propertyField) {
-		if (propertyField.isAnnotationPresent(NotNull.class)) {
+	private boolean isFieldRequired(Field propertyField, PropertyDescription propertyDescription) {
+		if (propertyField != null && (propertyField.isAnnotationPresent(NotNull.class) || propertyField.isAnnotationPresent(NotEmpty.class) || propertyField.isAnnotationPresent(NotBlank.class))) {
 			return true;
 		}
-		PropertyDescription propertyDescription = getPropertyDescription(propertyField);
 		if (propertyDescription != null) {
 			return propertyDescription.required();
 		}
@@ -190,10 +236,10 @@ public class DataTypeParser {
 			if (Inspector.isListSetOrArray(propertyType)) {
 				Class<?> genericClassOfList = Inspector.getGenericClassOfList(propertyType, propertyField.getGenericType());
 				if (genericClassOfList.isEnum()) {
-					return "List[String]";
+					return "String";
 				}
 				addFurtherVOClasses(genericClassOfList);
-				return "List[" + removeEnd(genericClassOfList.getSimpleName(), "VO") + "]";
+				return removeEnd(genericClassOfList.getSimpleName(), "VO");
 			}
 		}
 		if (propertyType.isEnum()) {
@@ -208,42 +254,50 @@ public class DataTypeParser {
 		return propertyType.getSimpleName();
 	}
 	
-	private String[] getSample(Field propertyField) {
+	private String[] getSample(Field propertyField, PropertyDescriptor descriptor) {
 		if (propertyField != null && propertyField.isAnnotationPresent(Sample.class)) {
 			return propertyField.getAnnotation(Sample.class).value();
+		}
+		Method readMethod = descriptor.getReadMethod();
+		Method writeMethod = descriptor.getWriteMethod();
+		if(readMethod != null && readMethod.isAnnotationPresent(Sample.class)) {
+			return readMethod.getAnnotation(Sample.class).value();
+		}
+		if (writeMethod != null &&writeMethod.isAnnotationPresent(Sample.class)) {
+			return writeMethod.getAnnotation(Sample.class).value();
 		}
 		return new String[] {};
 	}
 
-	private boolean isForRequest(Field propertyField) {
-		if (propertyField != null && propertyField.isAnnotationPresent(PropertyDescription.class)) {
-			PropertyDescription propertyDescription = getPropertyDescription(propertyField);
-			return (!propertyDescription.onlyRequest() && !propertyDescription.onlyResponse()) || propertyDescription.onlyRequest();
+	private boolean isForRequest(PropertyDescription propertyDescription, PropertyDescriptor descriptor) {
+		if(descriptor.getWriteMethod() != null && descriptor.getWriteMethod().isAnnotationPresent(JsonIgnore.class)) {
+			return false;
 		}
-		return false;
+		return (!propertyDescription.onlyRequest() && !propertyDescription.onlyResponse()) || propertyDescription.onlyRequest();
 	}
 
-	private boolean isForResponse(Field propertyField) {
-		if (propertyField != null && propertyField.isAnnotationPresent(PropertyDescription.class)) {
-			PropertyDescription propertyDescription = getPropertyDescription(propertyField);
-			return (!propertyDescription.onlyRequest() && !propertyDescription.onlyResponse()) || propertyDescription.onlyResponse();
+	private boolean isForResponse(PropertyDescription propertyDescription, PropertyDescriptor descriptor) {
+		if(descriptor.getReadMethod() != null && descriptor.getReadMethod().isAnnotationPresent(JsonIgnore.class)) {
+			return false;
 		}
-		return false;
+		return (!propertyDescription.onlyRequest() && !propertyDescription.onlyResponse()) || propertyDescription.onlyResponse();
 	}
 
-	private String getDescription(Field propertyField, DocProperty property) {
+	private String getDescription(Field propertyField, DocProperty property, PropertyDescription propertyDescription) {
 		String description = "";
 		if (propertyField != null) {
 			if (propertyField.isAnnotationPresent(PropertyDescription.class)) {
                 reporter.addDocumentedField(propertyField.getDeclaringClass(), propertyField.getName());
-				PropertyDescription propertyDescription = getPropertyDescription(propertyField);
 				description = propertyDescription.description();
+				// TODO Move to doumentwriter
 				if (property.hasEnumValues() && propertyDescription.addPossibleEnumValues()) {
 					description += " Possible values: " + property.getEnumValues();
 				}
 			} else {
 				reporter.addUndocumentedField(propertyField.getDeclaringClass(), propertyField.getName());
 			}
+		} else {
+			description = propertyDescription.description();
 		}
 		return description;
 	}
@@ -301,18 +355,53 @@ public class DataTypeParser {
         return clazz.getSuperclass();
     }
 
-    private boolean skipThisField(Field propertyField) {
-        if(propertyField == null) {
-            return true;
-        }
-        if(propertyField.isAnnotationPresent(IgnoreForDocumentation.class)) {
+    private boolean skipThisField(Field propertyField, PropertyDescription propertyDescription, PropertyDescriptor descriptor) {
+        if(propertyField != null && propertyField.isAnnotationPresent(IgnoreForDocumentation.class)) {
             reporter.addIgnoredField(propertyField.getDeclaringClass(), propertyField.getName());
             return true;
         }
+		if (propertyDescription == null) {
+			Method readMethod = descriptor.getReadMethod();
+			Method writeMethod = descriptor.getWriteMethod();
+			if(readMethod != null && readMethod.isAnnotationPresent(JsonIgnore.class)) {
+				if(writeMethod != null && writeMethod.isAnnotationPresent(JsonProperty.class)) {
+					reporter.addUndocumentedField(readMethod != null ? readMethod.getDeclaringClass() : writeMethod.getDeclaringClass(), descriptor.getName());
+					return true;
+				}
+				reporter.addIgnoredField(readMethod != null ? readMethod.getDeclaringClass() : writeMethod.getDeclaringClass(), descriptor.getName());
+				return true;
+			}
+			if(propertyField != null) {
+				reporter.addUndocumentedField(propertyField.getDeclaringClass(), propertyField.getName());
+				return true;
+			} else {
+				reporter.addUndocumentedField(readMethod != null ? readMethod.getDeclaringClass() : writeMethod.getDeclaringClass(), descriptor.getName());
+				return true;
+			}
+		}
 		return false;
 	}
 
-    public Map<String, DocDataType> getDataTypes() {
+	private PropertyDescription getPropertyDescription(Field propertyField, PropertyDescriptor descriptor) {
+		PropertyDescription propertyDescription = null;
+		if(propertyField == null) {
+			Method readMethod = descriptor.getReadMethod();
+			propertyDescription = getPropertyDescription(readMethod);
+			if (propertyDescription == null) {
+				propertyDescription = getPropertyDescription(descriptor.getWriteMethod());
+				reporter.addDocumentedMethod(readMethod != null ? readMethod.getDeclaringClass() : descriptor.getWriteMethod().getDeclaringClass(), descriptor.getName());
+			}
+		} else {
+			propertyDescription = getPropertyDescription(propertyField);
+			if(propertyDescription != null) {
+				reporter.addDocumentedField(propertyField.getDeclaringClass(), propertyField.getName());
+			}
+		}
+		return propertyDescription;
+	}
+
+
+	public Map<String, DocDataType> getDataTypes() {
 		return dataTypes;
 	}
     

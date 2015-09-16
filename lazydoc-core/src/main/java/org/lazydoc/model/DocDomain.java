@@ -1,117 +1,104 @@
 package org.lazydoc.model;
 
 import org.apache.commons.lang3.StringUtils;
-import org.lazydoc.annotation.InsertPosition;
 
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
-import java.util.TreeSet;
+import java.util.*;
 
 public class DocDomain {
-	protected String domain = "";
-	protected String domainShortDescription = "";
-	private String description = "";
-	private int order = 1;
-	private String externalDocumentation;
-	private InsertPosition externalInsertPosition = InsertPosition.TOP;
-	private Set<DocOperation> operations = new TreeSet<DocOperation>();
-	private Map<Integer, DocSubDomain> subDomains = new TreeMap<Integer, DocSubDomain>();
-	private Set<DocError> errorList = new TreeSet<>();
-	private boolean deprecated = false;
+    protected String domain = "";
+    protected String domainShortDescription = "";
+    private String description = "";
+    private int order = 1;
+    private List<DocExternalDocumentation> externalDocumentations = new ArrayList<>();
+    private Set<DocOperation> operations = new TreeSet<>();
+    private Map<Integer, DocSubDomain> subDomains = new TreeMap<>();
+    private Set<DocError> errorList = new TreeSet<>();
+    private boolean deprecated = false;
 
-	public String getDomain() {
-		return domain;
-	}
+    public String getDomain() {
+        return domain;
+    }
 
-	public void setDomain(String name) {
-		this.domain = name;
-	}
+    public void setDomain(String name) {
+        this.domain = name;
+    }
 
-	public String getDescription() {
-		return description;
-	}
+    public String getDescription() {
+        return description;
+    }
 
-	public void setDescription(String description) {
-		this.description = description;
-	}
+    public void setDescription(String description) {
+        this.description = description;
+    }
 
-	public void setDomainShortDescription(String domainShortDescription) {
-		this.domainShortDescription = domainShortDescription;
-	}
+    public void setDomainShortDescription(String domainShortDescription) {
+        this.domainShortDescription = domainShortDescription;
+    }
 
-	public int getOrder() {
-		return order;
-	}
+    public int getOrder() {
+        return order;
+    }
 
-	public void setOrder(int order) {
-		this.order = order;
-	}
+    public void setOrder(int order) {
+        this.order = order;
+    }
 
-	public Map<Integer, DocSubDomain> getSubDomains() {
-		return subDomains;
-	}
+    public Map<Integer, DocSubDomain> getSubDomains() {
+        return subDomains;
+    }
 
-	public void setSubDomains(Map<Integer, DocSubDomain> subDomains) {
-		this.subDomains = subDomains;
-	}
+    public void setSubDomains(Map<Integer, DocSubDomain> subDomains) {
+        this.subDomains = subDomains;
+    }
 
-	public Set<DocOperation> getOperations() {
-		return operations;
-	}
+    public Set<DocOperation> getOperations() {
+        return operations;
+    }
 
-	public void setOperations(Set<DocOperation> operations) {
-		this.operations = operations;
-	}
+    public void setOperations(Set<DocOperation> operations) {
+        this.operations = operations;
+    }
 
-	public String getExternalDocumentation() {
-		return externalDocumentation;
-	}
+    public List<DocExternalDocumentation> getExternalDocumentations() {
+        return externalDocumentations;
+    }
 
-	public void setExternalDocumentation(String externalDocumentation) {
-		this.externalDocumentation = externalDocumentation;
-	}
+    public void setExternalDocumentations(List<DocExternalDocumentation> externalDocumentations) {
+        this.externalDocumentations = externalDocumentations;
+    }
 
-	public InsertPosition getExternalInsertPosition() {
-		return externalInsertPosition;
-	}
+    public Set<DocError> getErrorList() {
+        return errorList;
+    }
 
-	public void setExternalInsertPosition(InsertPosition externalInsertPosition) {
-		this.externalInsertPosition = externalInsertPosition;
-	}
+    public void setErrorList(Set<DocError> errorList) {
+        this.errorList = errorList;
+    }
 
-	public Set<DocError> getErrorList() {
-		return errorList;
-	}
+    public void addSubDomain(DocSubDomain subDomain) {
+        this.getSubDomains().put(subDomain.getOrder(), subDomain);
+    }
 
-	public void setErrorList(Set<DocError> errorList) {
-		this.errorList = errorList;
-	}
+    public void addDocError(DocError error) {
+        errorList.add(error);
+    }
 
-	public void addSubDomain(DocSubDomain subDomain) {
-		this.getSubDomains().put(subDomain.getOrder(), subDomain);
-	}
+    public String getDomainShortDescription() {
+        if (StringUtils.isNotBlank(domainShortDescription)) {
+            return domainShortDescription;
+        }
+        return domain;
+    }
 
-	public void addDocError(DocError error) {
-		errorList.add(error);
-	}
+    public boolean hasExternalDocumentation() {
+        return !externalDocumentations.isEmpty();
+    }
 
-	public String getDomainShortDescription() {
-		if (StringUtils.isNotBlank(domainShortDescription)) {
-			return domainShortDescription;
-		}
-		return domain;
-	}
+    public boolean isDeprecated() {
+        return deprecated;
+    }
 
-	public boolean hasExternalDocumentation() {
-		return StringUtils.isNotBlank(externalDocumentation);
-	}
-
-	public boolean isDeprecated() {
-		return deprecated;
-	}
-
-	public void setDeprecated(boolean deprecated) {
-		this.deprecated = deprecated;
-	}
+    public void setDeprecated(boolean deprecated) {
+        this.deprecated = deprecated;
+    }
 }

@@ -5,7 +5,7 @@
     <groupId>org.lazydoc</groupId>
     <artifactId>lazydoc</artifactId>
     <packaging>pom</packaging>
-    <version>1.0.4-SNAPSHOT</version>
+    <version>1.0.5-SNAPSHOT</version>
 
     <name>${project.groupId}:${project.artifactId}</name>
     <description>A framework for generating automatic REST API documentation.</description>
@@ -34,14 +34,18 @@
 
     <distributionManagement>
         <snapshotRepository>
-            <id>ossrh</id>
-            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+            <id>nexus-snapshots</id>
+            <name>Nexus Staging Repo</name>
+            <url>http://cp-wbench.psst.t-online.corp/nexus/content/repositories/snapshots/</url>
+            <uniqueVersion>false</uniqueVersion>
         </snapshotRepository>
         <repository>
-            <id>ossrh</id>
-            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+            <id>nexus-releases</id>
+            <name>Nexus Release Repo</name>
+            <url>http://cp-wbench.psst.t-online.corp/nexus/content/repositories/2ndparty/</url>
         </repository>
     </distributionManagement>
+
 
     <modules>
         <module>lazydoc-core</module>
@@ -105,6 +109,7 @@
                     </execution>
                 </executions>
             </plugin>
+            <!--
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-gpg-plugin</artifactId>
@@ -119,22 +124,13 @@
                     </execution>
                 </executions>
             </plugin>
+            -->
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>versions-maven-plugin</artifactId>
                 <version>2.1</version>
             </plugin>
-            <plugin>
-                <groupId>org.sonatype.plugins</groupId>
-                <artifactId>nexus-staging-maven-plugin</artifactId>
-                <version>1.6.3</version>
-                <extensions>true</extensions>
-                <configuration>
-                    <serverId>ossrh</serverId>
-                    <nexusUrl>https://oss.sonatype.org/</nexusUrl>
-                    <autoReleaseAfterClose>true</autoReleaseAfterClose>
-                </configuration>
-            </plugin>
+
         </plugins>
     </build>
 

@@ -348,7 +348,7 @@ public class SpringParser {
         DocOperation operation = new DocOperation();
         operation.setHttpMethod(getHttpMethod(method));
         operation.setResponseStatus(getResponseStatus(method));
-        operation.setOperationResponse(getResponseClass(method));
+        operation.setOperationResponse(getOperationResponse(method));
         operation.setNickname(method.getName());
         operation.setPath(path);
         operation.setParameters(getParametersOfMethod(method, path));
@@ -417,8 +417,7 @@ public class SpringParser {
             domain.setDomainShortDescription(description.shortDescription());
             domain.setDescription(description.description());
             domain.setOrder(description.order());
-            domain.setExternalDocumentation(description.externalDocumentation().location());
-            domain.setExternalInsertPosition(description.externalDocumentation().postion());
+            domain.setExternalDocumentations(getExternalDocumentations(description.externalDocumentation()));
             domain.getErrorList().addAll(listOfCommonErrors);
             domains.put(description.order(), domain);
             if (StringUtils.isNotBlank(description.subDomain().name())) {
@@ -451,6 +450,17 @@ public class SpringParser {
         return domain;
     }
 
+    private List<DocExternalDocumentation> getExternalDocumentations(ExternalDocumentation[] documentations) {
+        List<DocExternalDocumentation> externalDocumentations = new ArrayList<>();
+        for (ExternalDocumentation documentation : documentations) {
+            DocExternalDocumentation externalDocumentation = new DocExternalDocumentation();
+            externalDocumentation.setLocation(documentation.location());
+            externalDocumentation.setPostion(documentation.postion());
+            externalDocumentations.add(externalDocumentation);
+        }
+        return externalDocumentations;
+    }
+
     private DocSubDomain createDocSubDomain(DomainDescription description) {
         DocSubDomain subDomain = new DocSubDomain();
         subDomain.setDomain(description.name());
@@ -459,8 +469,7 @@ public class SpringParser {
         subDomain.setSubDomain(description.subDomain().name());
         subDomain.setSubDomainShortDescription(description.subDomain().shortDescription());
         subDomain.setDescription(description.subDomain().description());
-        subDomain.setExternalDocumentation(description.subDomain().externalDocumentation().location());
-        subDomain.setExternalInsertPosition(description.subDomain().externalDocumentation().postion());
+        subDomain.setExternalDocumentations(getExternalDocumentations(description.subDomain().externalDocumentation()));
         return subDomain;
     }
 
@@ -476,8 +485,8 @@ public class SpringParser {
         return HttpStatus.OK.value()+" - "+HttpStatus.OK.getReasonPhrase();
     }
 
-    private OperationResponse getResponseClass(Method method) {
-        OperationResponse operationResponse = new OperationResponse();
+    private DocOperationResponse getOperationResponse(Method method) {
+        DocOperationResponse operationResponse = new DocOperationResponse();
         Method documentedMethod = getMethodFromDocumentation(method);
         if (documentedMethod.isAnnotationPresent(ResponseDescription.class)) {
             ResponseDescription responseDescription = documentedMethod.getAnnotation(ResponseDescription.class);
@@ -485,6 +494,8 @@ public class SpringParser {
                 dataTypeParser.addDataType(responseDescription.type());
                 operationResponse.setResponseType(removeEnd(responseDescription.type().getSimpleName(), config.getDataTypeSuffix()));
                 log.debug("GetOperationResponse - ResponseDescription "+operationResponse);
+                operationResponse.setDescription(responseDescription.description());
+                operationResponse.setStaticSample(responseDescription.staticSample());
                 return operationResponse;
             }
         }

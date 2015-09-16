@@ -11,6 +11,8 @@ public class DocProperty implements Comparable<DocProperty> {
 	private int order = Integer.MAX_VALUE;
 	private String name = "";
 	private String description = "";
+	private String mapKeyDescription = "";
+	private String mapValueDescription = "";
 	private String type = "";
 	private String[] sample = {};
 	private List<String> enumValues = new ArrayList<String>();
@@ -18,7 +20,11 @@ public class DocProperty implements Comparable<DocProperty> {
 	private boolean request = true;
 	private boolean response = true;
 	private boolean list = false;
+	private boolean map = false;
 	private boolean deprecated = false;
+	private boolean primitive = false;
+	private boolean requestNullValueSample = true;
+	private boolean responseNullValueSample = true;
 
 	public boolean hasEnumValues() {
 		return !enumValues.isEmpty();
@@ -131,6 +137,54 @@ public class DocProperty implements Comparable<DocProperty> {
 
 	public void setOrder(int order) {
 		this.order = order;
+	}
+
+	public String getMapKeyDescription() {
+		return mapKeyDescription;
+	}
+
+	public void setMapKeyDescription(String mapKeyDescription) {
+		this.mapKeyDescription = mapKeyDescription;
+	}
+
+	public String getMapValueDescription() {
+		return mapValueDescription;
+	}
+
+	public void setMapValueDescription(String mapValueDescription) {
+		this.mapValueDescription = mapValueDescription;
+	}
+
+	public boolean isMap() {
+		return map;
+	}
+
+	public void setMap(boolean map) {
+		this.map = map;
+	}
+
+	public boolean isPrimitive() {
+		return primitive;
+	}
+
+	public void setPrimitive(boolean primitive) {
+		this.primitive = primitive;
+	}
+
+	public boolean isRequestNullValueSample() {
+		return requestNullValueSample;
+	}
+
+	public void setRequestNullValueSample(boolean requestNullValueSample) {
+		this.requestNullValueSample = requestNullValueSample;
+	}
+
+	public boolean isResponseNullValueSample() {
+		return responseNullValueSample;
+	}
+
+	public void setResponseNullValueSample(boolean responseNullValueSample) {
+		this.responseNullValueSample = responseNullValueSample;
 	}
 
 	@Override

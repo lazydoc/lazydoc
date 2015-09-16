@@ -9,6 +9,8 @@ public class DocDataType {
 	private String name = "";
 	private String id = "";
 	private boolean list = false;
+	private boolean nullValuesInSample = true;
+
 	private List<DocProperty> properties = new ArrayList<>();
 
 	public String getName() {
@@ -33,6 +35,14 @@ public class DocDataType {
 
 	public void setList(boolean list) {
 		this.list = list;
+	}
+
+	public boolean isNullValuesInSample() {
+		return nullValuesInSample;
+	}
+
+	public void setNullValuesInSample(boolean nullValuesInSample) {
+		this.nullValuesInSample = nullValuesInSample;
 	}
 
 	public List<DocProperty> getProperties() {

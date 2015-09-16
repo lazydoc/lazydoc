@@ -14,5 +14,5 @@ public @interface SubDomainDescription {
 
 	String description() default "";
 
-	ExternalDocumentation externalDocumentation() default @ExternalDocumentation(location = "");
+	ExternalDocumentation[] externalDocumentation() default {};
 }

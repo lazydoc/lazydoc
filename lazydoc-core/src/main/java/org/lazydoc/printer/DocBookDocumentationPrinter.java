@@ -3,8 +3,6 @@ package org.lazydoc.printer;
 import com.cedarsoftware.util.io.JsonWriter;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.lazydoc.annotation.InsertPosition;
 import org.lazydoc.config.PrinterConfig;
 import org.lazydoc.model.*;
@@ -25,6 +23,8 @@ import java.util.List;
 import java.util.Set;
 
 public class DocBookDocumentationPrinter extends DocumentationPrinter {
+
+    // TODO update DocBookDocumentationPrinter
 
     @Override
     public void print(PrinterConfig printerConfig) throws Exception {
@@ -82,8 +82,8 @@ public class DocBookDocumentationPrinter extends DocumentationPrinter {
             xml += printFullTag("title", domain.getDomainShortDescription());
             xml += printFullTag("para", domain.getDescription());
 
-            if (domain.hasExternalDocumentation() && domain.getExternalInsertPosition().equals(InsertPosition.TOP)) {
-                xml += printShortTagWithAttributes("xi:include", "href=\"../static/" + domain.getExternalDocumentation() + ".xml\"");
+            if (domain.hasExternalDocumentation() ) {
+                xml += printShortTagWithAttributes("xi:include", "href=\"../static/" + domain.getExternalDocumentations() + ".xml\"");
             }
 
             if (!domain.getSubDomains().isEmpty()) {
@@ -92,7 +92,7 @@ public class DocBookDocumentationPrinter extends DocumentationPrinter {
                     xml += printFullTag("title", subDomain.getSubDomainShortDescription());
                     xml += printFullTag("para", subDomain.getDescription());
                     if (subDomain.hasExternalDocumentation()) {
-                        xml += printShortTagWithAttributes("xi:include", "href=\"../static/" + subDomain.getExternalDocumentation()
+                        xml += printShortTagWithAttributes("xi:include", "href=\"../static/" + subDomain.getExternalDocumentations()
                                 + ".xml\"");
                     }
                     xml += printApiOperationsForDomain(subDomain);
@@ -106,8 +106,8 @@ public class DocBookDocumentationPrinter extends DocumentationPrinter {
 
             xml += printCommonErrorList(domain.getErrorList(), "sect2");
 
-            if (domain.hasExternalDocumentation() && domain.getExternalInsertPosition().equals(InsertPosition.BOTTOM)) {
-                xml += printShortTagWithAttributes("xi:include", "href=\"../static/" + domain.getExternalDocumentation() + ".xml\"");
+            if (domain.hasExternalDocumentation() ) {
+                xml += printShortTagWithAttributes("xi:include", "href=\"../static/" + domain.getExternalDocumentations() + ".xml\"");
             }
 
             xml += printEndTag("chapter");
@@ -242,7 +242,7 @@ public class DocBookDocumentationPrinter extends DocumentationPrinter {
         return xml;
     }
 
-    private String printResponse(OperationResponse operationResponse, String responseStatus) {
+    private String printResponse(DocOperationResponse operationResponse, String responseStatus) {
         DocDataType dataType = printerConfig.getDataTypes().get(operationResponse.getResponseType());
         String xml = printStartTag("simplesect");
         xml += printFullTag("title", "Structure of the response");
