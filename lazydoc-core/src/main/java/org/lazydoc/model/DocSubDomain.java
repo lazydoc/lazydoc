@@ -31,4 +31,11 @@ public class DocSubDomain extends DocDomain {
 		return domain + "-" + subDomain;
 	}
 
+	@Override
+	public String toString() {
+		return "DocSubDomain{" +
+				"subDomain='" + subDomain + '\'' +
+				", subDomainShortDescription='" + subDomainShortDescription + '\'' +
+				'}';
+	}
 }

@@ -2,8 +2,7 @@ package org.lazydoc.model;
 
 import org.apache.commons.lang3.StringUtils;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 import static org.apache.commons.lang3.StringUtils.removeEnd;
 
@@ -15,7 +14,8 @@ public class DocProperty implements Comparable<DocProperty> {
 	private String mapValueDescription = "";
 	private String type = "";
 	private String[] sample = {};
-	private List<String> enumValues = new ArrayList<String>();
+	private Set<DocEnum> enumValues = new TreeSet<>();
+    private boolean addEnumValues = true;
 	private boolean required = false;
 	private boolean request = true;
 	private boolean response = true;
@@ -28,22 +28,6 @@ public class DocProperty implements Comparable<DocProperty> {
 
 	public boolean hasEnumValues() {
 		return !enumValues.isEmpty();
-	}
-
-	public void addEnumValues(Class<?> propertyType) {
-		if (propertyType.isEnum()) {
-			for (Enum<?> enumElement : (Enum[]) propertyType.getEnumConstants()) {
-				enumValues.add(enumElement.toString());
-			}
-		}
-	}
-
-    public void  addEnumValue(String value) {
-        enumValues.add(value);
-    }
-
-	public String getEnumValues() {
-		return StringUtils.join(enumValues, ", ");
 	}
 
 	public String getName() {
@@ -187,7 +171,23 @@ public class DocProperty implements Comparable<DocProperty> {
 		this.responseNullValueSample = responseNullValueSample;
 	}
 
-	@Override
+    public Set<DocEnum> getEnumValues() {
+        return enumValues;
+    }
+
+    public void setEnumValues(Set<DocEnum> enumValues) {
+        this.enumValues = enumValues;
+    }
+
+    public boolean isAddEnumValues() {
+        return addEnumValues;
+    }
+
+    public void setAddEnumValues(boolean addEnumValues) {
+        this.addEnumValues = addEnumValues;
+    }
+
+    @Override
 	public int compareTo(DocProperty property) {
 		int compareResult = Integer.compare(this.order, property.order);
 		if(compareResult == 0) {
@@ -198,5 +198,28 @@ public class DocProperty implements Comparable<DocProperty> {
 			}
 		}
 		return compareResult;
+	}
+
+	@Override
+	public String toString() {
+		return "DocProperty{" +
+				"order=" + order +
+				", name='" + name + '\'' +
+				", description='" + description + '\'' +
+				", mapKeyDescription='" + mapKeyDescription + '\'' +
+				", mapValueDescription='" + mapValueDescription + '\'' +
+				", type='" + type + '\'' +
+				", sample=" + Arrays.toString(sample) +
+				", enumValues=" + enumValues +
+				", required=" + required +
+				", request=" + request +
+				", response=" + response +
+				", list=" + list +
+				", map=" + map +
+				", deprecated=" + deprecated +
+				", primitive=" + primitive +
+				", requestNullValueSample=" + requestNullValueSample +
+				", responseNullValueSample=" + responseNullValueSample +
+				'}';
 	}
 }

@@ -10,5 +10,9 @@ public @interface ResponseDescription {
 
 	String staticSample() default "";
 
+	String simpleTypeDescription() default "";
+
 	Class<?> type() default void.class;
+
+
 }

@@ -1,5 +1,7 @@
 package org.lazydoc.model;
 
+import org.apache.commons.lang3.StringUtils;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -10,6 +12,7 @@ public class DocDataType {
 	private String id = "";
 	private boolean list = false;
 	private boolean nullValuesInSample = true;
+	private String alias = "";
 
 	private List<DocProperty> properties = new ArrayList<>();
 
@@ -45,11 +48,35 @@ public class DocDataType {
 		this.nullValuesInSample = nullValuesInSample;
 	}
 
+	public String getAlias() {
+		return alias;
+	}
+
+	public void setAlias(String alias) {
+		this.alias = alias;
+	}
+
 	public List<DocProperty> getProperties() {
 		return properties;
 	}
 
 	public void setProperties(List<DocProperty> properties) {
 		this.properties = properties;
+	}
+
+	public String getAliasOrName() {
+		return StringUtils.isNotBlank(alias) ? alias : name;
+	}
+
+	@Override
+	public String toString() {
+		return "DocDataType{" +
+				"name='" + name + '\'' +
+				", id='" + id + '\'' +
+				", list=" + list +
+				", nullValuesInSample=" + nullValuesInSample +
+				", alias='" + alias + '\'' +
+				", properties=" + properties +
+				'}';
 	}
 }

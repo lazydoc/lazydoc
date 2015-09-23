@@ -85,7 +85,7 @@ public class LazyDocMojo extends AbstractMojo {
         Log log = getLog();
         String logLevel = log.isDebugEnabled() ? "DEBUG" : log.isWarnEnabled() ? "WARN" : log.isInfoEnabled() ? "INFO" : "ERROR";
         log.info("Log level is "+logLevel);
-        log.info(config.toString());
+        log.debug(config.toString());
         try {
             ClassLoader classLoader = getClassLoader();
             Thread.currentThread().setContextClassLoader(classLoader);
@@ -115,7 +115,7 @@ public class LazyDocMojo extends AbstractMojo {
         this.addRelevantPluginDependenciesToClasspath(classpathURLs);
         this.addRelevantProjectDependenciesToClasspath(classpathURLs);
         for (URL classpath : classpathURLs) {
-            getLog().info("Classpath: " + classpath.toString());
+            getLog().debug("Classpath: " + classpath.toString());
         }
         return new URLClassLoader(classpathURLs.toArray(new URL[classpathURLs.size()]));
     }

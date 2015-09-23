@@ -1,10 +1,11 @@
 package org.lazydoc.model;
 
 import org.apache.commons.lang3.StringUtils;
-import org.lazydoc.annotation.InsertPosition;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 
 public class DocOperation implements Comparable<DocOperation> {
 	private Integer order = 0;
@@ -16,14 +17,15 @@ public class DocOperation implements Comparable<DocOperation> {
 	private String nickname = "";
 	private DocOperationResponse operationResponse = new DocOperationResponse();
 	private String shortDescription = "";
-	private String summary = "";
+	private String description = "";
 	private String notes = "";
 	private String errorResponse = "";
 	private String level = "plattform";
+	private String staticRequestSample = "";
 	private List<DocParameter> parameters = new ArrayList<DocParameter>();
 	private String role;
-	private String externalDocumentation;
-	private InsertPosition externalInsertPosition = InsertPosition.TOP;
+	private List<DocExternalDocumentation> externalDocumentations = new ArrayList<>();
+	private Set<DocError> errorList = new TreeSet<>();
 	private boolean deprecated;
 
 	public Integer getOrder() {
@@ -92,7 +94,7 @@ public class DocOperation implements Comparable<DocOperation> {
 
 	public String getShortDescription() {
 		if (StringUtils.isBlank(shortDescription)) {
-			return summary;
+			return description;
 		}
 		return shortDescription;
 	}
@@ -101,12 +103,12 @@ public class DocOperation implements Comparable<DocOperation> {
 		this.shortDescription = shortDescription;
 	}
 
-	public String getSummary() {
-		return summary;
+	public String getDescription() {
+		return description;
 	}
 
-	public void setSummary(String summary) {
-		this.summary = summary;
+	public void setDescription(String description) {
+		this.description = description;
 	}
 
 	public String getNotes() {
@@ -149,6 +151,14 @@ public class DocOperation implements Comparable<DocOperation> {
 		this.role = role;
 	}
 
+	public String getStaticRequestSample() {
+		return staticRequestSample;
+	}
+
+	public void setStaticRequestSample(String staticRequestSample) {
+		this.staticRequestSample = staticRequestSample;
+	}
+
 	@Override
 	public int compareTo(DocOperation o) {
 		int compareResult = this.order.compareTo(o.order);
@@ -158,24 +168,16 @@ public class DocOperation implements Comparable<DocOperation> {
 		return compareResult;
 	}
 
-	public String getExternalDocumentation() {
-		return externalDocumentation;
+	public List<DocExternalDocumentation> getExternalDocumentations() {
+		return externalDocumentations;
 	}
 
-	public void setExternalDocumentation(String externalDocumentation) {
-		this.externalDocumentation = externalDocumentation;
-	}
-
-	public InsertPosition getExternalInsertPosition() {
-		return externalInsertPosition;
-	}
-
-	public void setExternalInsertPosition(InsertPosition externalInsertPosition) {
-		this.externalInsertPosition = externalInsertPosition;
+	public void setExternalDocumentations(List<DocExternalDocumentation> externalDocumentations) {
+		this.externalDocumentations = externalDocumentations;
 	}
 
 	public boolean hasExternalDocumentation() {
-		return StringUtils.isNotBlank(externalDocumentation);
+		return !externalDocumentations.isEmpty();
 	}
 
 	public boolean isDeprecated() {
@@ -184,5 +186,13 @@ public class DocOperation implements Comparable<DocOperation> {
 
 	public void setDeprecated(boolean deprecated) {
 		this.deprecated = deprecated;
+	}
+
+	public Set<DocError> getErrorList() {
+		return errorList;
+	}
+
+	public void setErrorList(Set<DocError> errorList) {
+		this.errorList = errorList;
 	}
 }

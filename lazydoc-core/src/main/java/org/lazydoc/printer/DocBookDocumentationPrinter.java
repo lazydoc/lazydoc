@@ -3,7 +3,6 @@ package org.lazydoc.printer;
 import com.cedarsoftware.util.io.JsonWriter;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.lazydoc.annotation.InsertPosition;
 import org.lazydoc.config.PrinterConfig;
 import org.lazydoc.model.*;
 
@@ -138,7 +137,7 @@ public class DocBookDocumentationPrinter extends DocumentationPrinter {
             xml += printFullTag("uri", operation.getPath());
             xml += printEndTag("link");
             xml += printEndTag("entry");
-            xml += printFullTag("entry", operation.getSummary());
+            xml += printFullTag("entry", operation.getDescription());
             xml += printEndTag("row");
             xiIncludes += printShortTagWithAttributes("xi:include", "href=\"operations/" + domain.getDomain().toLowerCase() + "/"
                     + operation.getNickname().toLowerCase() + ".xml\"");
@@ -158,8 +157,7 @@ public class DocBookDocumentationPrinter extends DocumentationPrinter {
         xml += printFullTag("title", operation.getShortDescription());
         xml += printFullTag("para", operation.getNotes());
 
-        if (operation.hasExternalDocumentation() && operation.getExternalInsertPosition().equals(InsertPosition.TOP)) {
-            xml += printShortTagWithAttributes("xi:include", "href=\"../../../static/" + operation.getExternalDocumentation() + ".xml\"");
+        if (operation.hasExternalDocumentation()) {
         }
 
         xml += printStartTag("simplesect");
@@ -198,10 +196,6 @@ public class DocBookDocumentationPrinter extends DocumentationPrinter {
         xml += printEndTag("simplesect");
         xml += printRequestBody(operation.getParameters());
         xml += printResponse(operation.getOperationResponse(), operation.getResponseStatus());
-
-        if (operation.hasExternalDocumentation() && operation.getExternalInsertPosition().equals(InsertPosition.BOTTOM)) {
-            xml += printShortTagWithAttributes("xi:include", "href=\"../../../static/" + operation.getExternalDocumentation() + ".xml\"");
-        }
 
         xml += printEndTag("sect2");
         files.put("/chapters/operations/" + domain.toLowerCase() + "/" + operation.getNickname().toLowerCase() + ".xml",
@@ -352,7 +346,7 @@ public class DocBookDocumentationPrinter extends DocumentationPrinter {
         xml += printTableTop("List of possible errors", "1*,3*,2*", "Http Status", "Type", "Description");
         for (DocError error : errorList) {
             xml += printStartTag("row");
-            xml += printFullTag("entry", "" + error.getHttpStatus());
+            xml += printFullTag("entry", "" + error.getStatusCode());
             xml += printFullTag("entry", "" + error.getErrorCode());
             xml += printFullTag("entry", "" + error.getDescription());
             xml += printEndTag("row");

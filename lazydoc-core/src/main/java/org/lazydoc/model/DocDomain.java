@@ -68,11 +68,21 @@ public class DocDomain {
     }
 
     public Set<DocError> getErrorList() {
-        return errorList;
+        Set<DocError> errors = new TreeSet<>();
+        for (DocOperation operation : operations) {
+            for (DocError docError : operation.getErrorList()) {
+                errors.add(docError);
+            }
+        }
+        TreeSet<DocError> cleanedErrorList = new TreeSet<>(errorList);
+        cleanedErrorList.removeAll(errors);
+        return cleanedErrorList;
     }
 
     public void setErrorList(Set<DocError> errorList) {
-        this.errorList = errorList;
+        if(!errorList.isEmpty()) {
+            this.errorList = errorList;
+        }
     }
 
     public void addSubDomain(DocSubDomain subDomain) {
@@ -100,5 +110,20 @@ public class DocDomain {
 
     public void setDeprecated(boolean deprecated) {
         this.deprecated = deprecated;
+    }
+
+    @Override
+    public String toString() {
+        return "DocDomain{" +
+                "domain='" + domain + '\'' +
+                ", domainShortDescription='" + domainShortDescription + '\'' +
+                ", description='" + description + '\'' +
+                ", order=" + order +
+                ", externalDocumentations=" + externalDocumentations +
+                ", operations=" + operations +
+                ", subDomains=" + subDomains +
+                ", errorList=" + errorList +
+                ", deprecated=" + deprecated +
+                '}';
     }
 }

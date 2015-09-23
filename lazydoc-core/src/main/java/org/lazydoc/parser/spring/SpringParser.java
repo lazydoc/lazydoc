@@ -29,7 +29,7 @@ import java.util.regex.Pattern;
 import static org.apache.commons.lang3.StringUtils.removeEnd;
 
 public class SpringParser {
-    
+
     private static final Logger log = LogManager.getLogger(SpringParser.class);
 
     private DocumentationReporter reporter;
@@ -62,16 +62,16 @@ public class SpringParser {
 
     private Set<Class<?>> getAllRestfulControllerClasses() {
         String packageToSearchForControllers = config.getPackageToSearchForControllers();
-        if(StringUtils.isBlank(packageToSearchForControllers)) {
+        if (StringUtils.isBlank(packageToSearchForControllers)) {
             throw new RuntimeException("Please provide package to search for controllers in configuration");
         }
-        log.debug("Looking up on package "+packageToSearchForControllers);
+        log.debug("Looking up on package " + packageToSearchForControllers);
         Set<Class<?>> controllerSet = new Reflections(packageToSearchForControllers).getTypesAnnotatedWith(Controller.class);
-        log.info("Spring controllers found : "+controllerSet.size());
+        log.debug("Spring controllers found : " + controllerSet.size());
         Set<Class<?>> restcontrollersSet = new Reflections(packageToSearchForControllers).getTypesAnnotatedWith(RestController.class);
-        log.info("Spring restcontrollers found : "+restcontrollersSet.size());
+        log.debug("Spring restcontrollers found : " + restcontrollersSet.size());
         controllerSet.addAll(restcontrollersSet);
-        log.debug("Found Controllers: "+StringUtils.join(controllerSet, ", "));
+        log.debug("Found Controllers: " + StringUtils.join(controllerSet, ", "));
         return controllerSet;
     }
 
@@ -82,7 +82,6 @@ public class SpringParser {
             return;
         }
         if (controllerIsNotAbstract(controller) && isControllerAnnotationPresent(controller)) {
-            Set<DocError> errorList = getListOfPossibleErrors(controller);
             String generalRequestMapping = getGeneralRequestMapping(controller);
             for (Method method : controller.getDeclaredMethods()) {
                 try {
@@ -94,13 +93,12 @@ public class SpringParser {
                         String path = getRequestMapping(generalRequestMapping, method);
                         requestMappings.add(path);
                         DocDomain domain = getDomain(method);
-                        domain.setErrorList(errorList);
                         domain.setDeprecated(controller.isAnnotationPresent(Deprecated.class));
                         addOperation(method, path, domain);
                         reporter.addDocumentedMethod(controller, method.toString());
                     }
                 } catch (UndocumentedMethodException ex) {
-                    log.debug("UNDOCUMENTED METHOD: "+ex.getMessage());
+                    log.debug("UNDOCUMENTED METHOD: " + ex.getMessage());
                     reporter.addUndocumentedMethod(controller, method.toString());
                 }
 
@@ -108,35 +106,55 @@ public class SpringParser {
         }
     }
 
-    private Set<DocError> getListOfPossibleErrors(Class<?> controller) {
-        Class<?> stopInspectionAtControllerClass = null;
-        if(StringUtils.isNotBlank(config.getControllerClassToStopErrorInspection())) {
-            stopInspectionAtControllerClass = getClassByName(config.getControllerClassToStopErrorInspection());
+    private Set<DocError> getErrorList(ErrorDescription[] errorDescriptions) {
+        Set<DocError> errorList = new TreeSet<>();
+        if(errorDescriptions.length > 0) {
+            for (ErrorDescription errorDescription : errorDescriptions) {
+                errorList.add(new DocError(errorDescription.statusCode(), errorDescription.detail(), errorDescription.description()));
+            }
+            log.info("Found error list: "+StringUtils.join(errorList), ",");
         }
-        return getListOfPossibleErrors(controller, stopInspectionAtControllerClass, InstanceCreator.createInstanceOf(controller), new TreeSet<DocError>());
+        return errorList;
     }
 
+    private Set<DocError> getListOfPossibleErrors(Class<?> controller) {
+        return getListOfPossibleErrors(controller, null);
+    }
+
+    private Set<DocError> getListOfPossibleErrors(Class<?> controller, List<Class<?>> exceptionList) {
+        Class<?> stopInspectionAtControllerClass = null;
+        if (StringUtils.isNotBlank(config.getControllerClassToStopErrorInspection())) {
+            stopInspectionAtControllerClass = getClassByName(config.getControllerClassToStopErrorInspection());
+        }
+        return getListOfPossibleErrors(controller, stopInspectionAtControllerClass, InstanceCreator.createInstanceOf(controller), new TreeSet<DocError>(), exceptionList);
+    }
+
+
     private void addCommonListOfPossibleErrors() {
-        if(StringUtils.isNotBlank(config.getAbstractControllerClassForCommonExceptionHandlers()) && StringUtils.isNotBlank(config.getInstanceControllerClassForCommonExceptionHandlers())) {
+        if (StringUtils.isNotBlank(config.getAbstractControllerClassForCommonExceptionHandlers()) && StringUtils.isNotBlank(config.getInstanceControllerClassForCommonExceptionHandlers())) {
             Class<?> abstractControllerClass = getClassByName(config.getAbstractControllerClassForCommonExceptionHandlers());
             Class<?> instanceControllerClass = getClassByName(config.getInstanceControllerClassForCommonExceptionHandlers());
-            listOfCommonErrors.addAll(getListOfPossibleErrors(abstractControllerClass, null, InstanceCreator.createInstanceOf(instanceControllerClass), new TreeSet<DocError>()));
+            listOfCommonErrors.addAll(getListOfPossibleErrors(abstractControllerClass, null, InstanceCreator.createInstanceOf(instanceControllerClass), new TreeSet<DocError>(), null));
         }
     }
 
     private Set<DocError> getListOfPossibleErrors(Class<?> controller, Class<?> stopAtAbstractController, Object controllerInstance,
-                                                  Set<DocError> result) {
+                                                  Set<DocError> result, List<Class<?>> exceptionList) {
         if (controller.equals(Object.class) || (stopAtAbstractController != null && controller.equals(stopAtAbstractController))) {
             return result;
         } else {
             log.debug("Inspecting error handler in controller class " + controller.getSimpleName());
-            getListOfPossibleErrors(controller.getSuperclass(), stopAtAbstractController, controllerInstance, result);
+            getListOfPossibleErrors(controller.getSuperclass(), stopAtAbstractController, controllerInstance, result, exceptionList);
         }
         for (Method method : controller.getDeclaredMethods()) {
             if (method.isAnnotationPresent(ExceptionHandler.class)) {
+                ExceptionHandler exceptionHandler = method.getAnnotation(ExceptionHandler.class);
+                if (isExceptionListProvided(exceptionList) && !isExceptionHandlerForProvidedExceptions(exceptionList, exceptionHandler)) {
+                    log.debug("No matching exception of exception handler in provided list found");
+                    continue;
+                }
                 log.debug("Inspecting exception handler " + method.getName());
                 HttpStatus httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-                ExceptionHandler exceptionHandler = method.getAnnotation(ExceptionHandler.class);
                 if (method.isAnnotationPresent(ResponseStatus.class)) {
                     httpStatus = method.getAnnotation(ResponseStatus.class).value();
                 }
@@ -149,7 +167,7 @@ public class SpringParser {
                         continue;
                     }
                     reporter.addDocumentedErrorHandler(controller, method.toString());
-                    errorMessage = errorDescription.errorMessage();
+                    errorMessage = errorDescription.detail();
                     description = errorDescription.description();
 
                 } else {
@@ -158,19 +176,29 @@ public class SpringParser {
                 if (StringUtils.isEmpty(errorMessage)) {
                     errorMessage = getErrorMessageFromExceptionHandler(method, controllerInstance, exceptionHandler);
                 }
-                result.add(createDocError(httpStatus.value(), errorMessage, description));
+                result.add(new DocError(httpStatus.value(), errorMessage, description));
             }
         }
 
         return result;
     }
 
-    private DocError createDocError(int status, String errorCode, String description) {
-        DocError error = new DocError();
-        error.setHttpStatus(status);
-        error.setDescription(description);
-        error.setErrorCode(errorCode);
-        return error;
+    private boolean isExceptionListProvided(List<Class<?>> exceptionList) {
+        return exceptionList != null && !exceptionList.isEmpty();
+    }
+
+    private boolean isExceptionHandlerForProvidedExceptions(List<Class<?>> exceptionList, ExceptionHandler exceptionHandler) {
+        log.debug("Exception handler exceptions " + StringUtils.join(exceptionHandler.value(), ","));
+        log.debug("Exception list provided " + StringUtils.join(exceptionList, ","));
+        Class<? extends Throwable>[] exceptions = exceptionHandler.value();
+        for (Class<? extends Throwable> exception : exceptions) {
+            for (Class<?> providedException : exceptionList) {
+                if(exception.getName().equals(providedException.getName())) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     private String getErrorMessageFromExceptionHandler(Method method, Object controllerInstance, ExceptionHandler exceptionHandler) {
@@ -200,7 +228,7 @@ public class SpringParser {
             try {
                 return getClassByName(controller.getName() + config.getDocumentationSuffix());
             } catch (RuntimeException ex) {
-                log.debug("Could not find controller documentation in class "+controller.getName() + config.getDocumentationSuffix());
+                log.debug("Could not find controller documentation in class " + controller.getName() + config.getDocumentationSuffix());
                 return null;
             }
         } else {
@@ -319,7 +347,7 @@ public class SpringParser {
     }
 
     private Method getMethodFromDocumentation(Method method) {
-        if(StringUtils.isNotBlank(config.getDocumentationSuffix())) {
+        if (StringUtils.isNotBlank(config.getDocumentationSuffix())) {
             Class<?> documentation = getDocumentation(method.getDeclaringClass());
             try {
                 return documentation.getDeclaredMethod(method.getName(), method.getParameterTypes());
@@ -353,19 +381,32 @@ public class SpringParser {
         operation.setPath(path);
         operation.setParameters(getParametersOfMethod(method, path));
         operation.setRole(getRoleFromMethod(method));
+        operation.setStaticRequestSample(operationDescription.staticRequestSample());
         if (operationDescription != null) {
             if (StringUtils.isNotBlank(operationDescription.nickname())) {
                 operation.setNickname(operationDescription.nickname());
             }
             operation.setShortDescription(operationDescription.shortDescription());
-            operation.setSummary(operationDescription.description());
+            operation.setDescription(operationDescription.description());
             operation.setNotes(operationDescription.notes());
             operation.setOrder(operationDescription.order());
-            operation.setExternalDocumentation(operationDescription.externalDocumentation().location());
-            operation.setExternalInsertPosition(operationDescription.externalDocumentation().postion());
+            operation.setExternalDocumentations(getExternalDocumentations(operationDescription.externalDocumentation()));
         }
         operation.setDeprecated(method.isAnnotationPresent(Deprecated.class));
+        operation.setErrorList(getErrorListForOperation(method));
         domain.getOperations().add(operation);
+    }
+
+    private Set<DocError> getErrorListForOperation(Method method) {
+        Method methodFromDocumentation = getMethodFromDocumentation(method);
+        if(methodFromDocumentation.isAnnotationPresent(ErrorDescriptions.class)) {
+            return getErrorList(methodFromDocumentation.getAnnotation(ErrorDescriptions.class).value());
+        }
+        List<Class<?>> exceptionList = Arrays.asList(method.getExceptionTypes());
+        if(exceptionList.isEmpty()) {
+            return new TreeSet<>();
+        }
+        return getListOfPossibleErrors(method.getDeclaringClass(), exceptionList);
     }
 
     private OperationDescription getOperationDescription(Method method) {
@@ -373,7 +414,7 @@ public class SpringParser {
         if (documentedMethod.isAnnotationPresent(OperationDescription.class)) {
             return documentedMethod.getAnnotation(OperationDescription.class);
         }
-        throw new UndocumentedMethodException("No Operation description found at method "+method.toString());
+        throw new UndocumentedMethodException("No Operation description found at method " + method.toString());
     }
 
     private String getRoleFromMethod(Method method) {
@@ -418,7 +459,7 @@ public class SpringParser {
             domain.setDescription(description.description());
             domain.setOrder(description.order());
             domain.setExternalDocumentations(getExternalDocumentations(description.externalDocumentation()));
-            domain.getErrorList().addAll(listOfCommonErrors);
+            domain.setErrorList(getErrorList(description.errors()));
             domains.put(description.order(), domain);
             if (StringUtils.isNotBlank(description.subDomain().name())) {
                 DocSubDomain subDomain = createDocSubDomain(description);
@@ -470,6 +511,7 @@ public class SpringParser {
         subDomain.setSubDomainShortDescription(description.subDomain().shortDescription());
         subDomain.setDescription(description.subDomain().description());
         subDomain.setExternalDocumentations(getExternalDocumentations(description.subDomain().externalDocumentation()));
+        subDomain.setErrorList(getErrorList(description.subDomain().errors()));
         return subDomain;
     }
 
@@ -478,11 +520,11 @@ public class SpringParser {
     }
 
     private String getResponseStatus(Method method) {
-        if(method.isAnnotationPresent(ResponseStatus.class)) {
+        if (method.isAnnotationPresent(ResponseStatus.class)) {
             ResponseStatus responseStatus = method.getAnnotation(ResponseStatus.class);
-            return responseStatus.value().value()+ " - "+StringUtils.defaultString(responseStatus.reason(), responseStatus.value().getReasonPhrase());
+            return responseStatus.value().value() + " - " + StringUtils.defaultString(responseStatus.reason(), responseStatus.value().getReasonPhrase());
         }
-        return HttpStatus.OK.value()+" - "+HttpStatus.OK.getReasonPhrase();
+        return HttpStatus.OK.value() + " - " + HttpStatus.OK.getReasonPhrase();
     }
 
     private DocOperationResponse getOperationResponse(Method method) {
@@ -493,27 +535,32 @@ public class SpringParser {
             if (responseDescription.type() != void.class) {
                 dataTypeParser.addDataType(responseDescription.type());
                 operationResponse.setResponseType(removeEnd(responseDescription.type().getSimpleName(), config.getDataTypeSuffix()));
-                log.debug("GetOperationResponse - ResponseDescription "+operationResponse);
-                operationResponse.setDescription(responseDescription.description());
-                operationResponse.setStaticSample(responseDescription.staticSample());
+                operationResponse.setResponseTypeClass(responseDescription.type());
+                log.debug("GetOperationResponse - ResponseDescription " + operationResponse);
                 return operationResponse;
             }
+            operationResponse.setDescription(responseDescription.description());
+            operationResponse.setStaticSample(responseDescription.staticSample());
+            operationResponse.setSimpleTypeDescription(responseDescription.simpleTypeDescription());
         }
         if (methodHasResponseType(method)) {
             if (Inspector.isListSetOrArray(method.getReturnType())) {
                 Class<?> genericClass = Inspector.getGenericClassOfList(method.getReturnType(), method.getGenericReturnType());
                 dataTypeParser.addDataType(genericClass);
                 operationResponse.setResponseType(removeEnd(genericClass.getSimpleName(), config.getDataTypeSuffix()));
+                operationResponse.setResponseTypeClass(genericClass);
                 operationResponse.setInList(true);
-                log.debug("GetOperationResponse - RestController or ResponseBody annotation - list "+operationResponse);
+                log.debug("GetOperationResponse - RestController or ResponseBody annotation - list " + operationResponse);
                 return operationResponse;
             } else {
                 dataTypeParser.addDataType(method.getReturnType());
                 operationResponse.setResponseType(removeEnd(method.getReturnType().getSimpleName(), config.getDataTypeSuffix()));
-                log.debug("GetOperationResponse - RestController or ResponseBody annotation - no list"+operationResponse);
+                operationResponse.setResponseTypeClass(method.getReturnType());
+                log.debug("GetOperationResponse - RestController or ResponseBody annotation - no list" + operationResponse);
                 return operationResponse;
             }
         }
+        log.debug("GetOperationResponse - ResponseDescription " + operationResponse);
         return operationResponse;
     }
 
@@ -607,7 +654,8 @@ public class SpringParser {
         docParameter.setReferenceName(requestParam.value() + (requestParam.required() ? "-required" : "-optional") + "-query");
         docParameter.setRequired(requestParam.required());
         Parameter parameter = getParameter(parameterDescription, requestParam.value());
-        docParameter.setDataTypeClass(getDataTypeClass(parameter, parameterType));
+        Class<?> dataTypeClass = getDataTypeClass(parameter, parameterType);
+        docParameter.setDataTypeClass(dataTypeClass);
         docParameter.setIgnore(parameter.ignore());
         docParameter.setDescription(parameter.description());
     }

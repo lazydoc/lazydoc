@@ -19,6 +19,8 @@ public @interface OperationDescription {
 
 	String notes() default "";
 
-	ExternalDocumentation externalDocumentation() default @ExternalDocumentation(location = "");
+	String staticRequestSample() default  "";
+
+	ExternalDocumentation[] externalDocumentation() default {};
 
 }

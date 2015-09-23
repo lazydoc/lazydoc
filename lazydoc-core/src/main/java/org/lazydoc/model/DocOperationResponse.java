@@ -6,9 +6,11 @@ package org.lazydoc.model;
 public class DocOperationResponse {
 
     private String responseType = "";
+    private Class<?> responseTypeClass = void.class;
     private boolean inList = false;
     private String description  = "";
     private String staticSample = "";
+    private String simpleTypeDescription = "";
 
     public String getResponseType() {
         return responseType;
@@ -42,11 +44,31 @@ public class DocOperationResponse {
         this.staticSample = staticSample;
     }
 
+
+    public Class<?> getResponseTypeClass() {
+        return responseTypeClass;
+    }
+
+    public void setResponseTypeClass(Class<?> responseTypeClass) {
+        this.responseTypeClass = responseTypeClass;
+    }
+
+    public String getSimpleTypeDescription() {
+        return simpleTypeDescription;
+    }
+
+    public void setSimpleTypeDescription(String simpleTypeDescription) {
+        this.simpleTypeDescription = simpleTypeDescription;
+    }
+
     @Override
     public String toString() {
-        return "OperationResponse{" +
+        return "DocOperationResponse{" +
                 "responseType='" + responseType + '\'' +
+                ", responseTypeClass=" + responseTypeClass +
                 ", inList=" + inList +
+                ", description='" + description + '\'' +
+                ", staticSample='" + staticSample + '\'' +
                 '}';
     }
 }

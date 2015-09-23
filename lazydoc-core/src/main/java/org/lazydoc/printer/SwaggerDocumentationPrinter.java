@@ -178,7 +178,7 @@ public class SwaggerDocumentationPrinter extends DocumentationPrinter {
 			json += "              \"type\": \"" + property.getType() + "\",\n";
 		}
 		if (property.hasEnumValues()) {
-			json += "              \"enum\": [\"" + property.getEnumValues().replaceAll(", ", "\", \"") + "\"],\n";
+			json += "              \"enum\": [\"" + property.getEnumValues() + "\"],\n";
 		}
 		json += "              \"description\": \"" + property.getDescription() + "\",\n";
 		if (property.hasSample()) {

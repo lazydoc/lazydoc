@@ -3,7 +3,6 @@ package org.lazydoc;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.LoggerContext;
-import org.apache.logging.log4j.core.config.Configuration;
 import org.apache.logging.log4j.core.config.LoggerConfig;
 import org.lazydoc.config.Config;
 import org.lazydoc.config.PrinterConfig;
@@ -25,7 +24,7 @@ public class LazyDoc {
 	public void document(Config config, List printerConfigs, String logLevel) throws Exception {
 		this.config = config;
 		this.reporter = new DocumentationReporter();
-		this.dataTypeParser = new DataTypeParser(reporter, config.getBaseDTOClassname());
+		this.dataTypeParser = new DataTypeParser(reporter, config);
 		this.springParser = new SpringParser(config, reporter, dataTypeParser);
 
 		LoggerContext ctx = (LoggerContext) LogManager.getContext(false);

@@ -2,16 +2,25 @@ package org.lazydoc.model;
 
 public class DocError implements Comparable<DocError> {
 
-	private int httpStatus;
+	private int statusCode;
 	private String errorCode;
 	private String description;
 
-	public int getHttpStatus() {
-		return httpStatus;
+	public DocError() {
 	}
 
-	public void setHttpStatus(int httpStatus) {
-		this.httpStatus = httpStatus;
+	public DocError(int statusCode, String errorCode, String description) {
+		this.statusCode = statusCode;
+		this.errorCode = errorCode;
+		this.description = description;
+	}
+
+	public int getStatusCode() {
+		return statusCode;
+	}
+
+	public void setStatusCode(int statusCode) {
+		this.statusCode = statusCode;
 	}
 
 	public String getErrorCode() {
@@ -32,15 +41,23 @@ public class DocError implements Comparable<DocError> {
 
 	@Override
 	public int compareTo(DocError error) {
-		if (httpStatus == error.httpStatus) {
+		if (statusCode == error.statusCode) {
 			int compareResult = errorCode.compareTo(error.errorCode);
 			if (compareResult == 0) {
 				return description.compareTo(error.description);
 			}
 			return compareResult;
 		} else {
-			return new Integer(httpStatus).compareTo(error.httpStatus);
+			return new Integer(statusCode).compareTo(error.statusCode);
 		}
 	}
 
+	@Override
+	public String toString() {
+		return "DocError{" +
+				"statusCode=" + statusCode +
+				", errorCode='" + errorCode + '\'' +
+				", description='" + description + '\'' +
+				'}';
+	}
 }

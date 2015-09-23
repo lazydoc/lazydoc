@@ -4,9 +4,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
 @Retention(RetentionPolicy.RUNTIME)
-public @interface PropertyMapDescription {
+public @interface DescriptionAlias {
 
-    String keyDescription() default "";
-    
-    String valueDescription() default "";
+    String value() default "";
 }
