@@ -273,10 +273,10 @@ public class DataTypeParser {
             return "String";
         }
         if (propertyType.getSimpleName().equals("BigDecimal")) {
-            return "Long";
+            return "Number";
         }
         if (propertyType.getSimpleName().equals("Integer")) {
-            return "int";
+            return "Number (int)";
         }
         return propertyType.getSimpleName();
     }
